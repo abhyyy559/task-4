@@ -1,0 +1,20 @@
+{
+ "case_id": "case_12",
+ "transaction_ids": [
+  1067,
+  1068
+ ],
+ "pattern": "money_mule_fanout",
+ "description": "Negative control marketplace payouts",
+ "label": "negative control: marketplace payouts legit",
+ "subject": {
+  "card1": "904225",
+  "device": "office-pc-02",
+  "account_id": "acct-904225",
+  "email": "user1067@example.com"
+ },
+ "expected": {
+  "verdict": "legit",
+  "fraud_pattern": null
+ }
+}

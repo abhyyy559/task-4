@@ -1,0 +1,30 @@
+# fraud-agent application settings (no secrets here; see .env.example).
+model:
+  name: mock-heuristic
+  provider: offline
+
+tigergraph:
+  host: ${TG_HOST:}
+  graph: FraudGraph
+  ports:
+    rest: 9000
+    gsql: 14240
+
+paths:
+  transactions: data/HHGOA_IEEE/transactions.csv
+  identity: data/HHGOA_IEEE/identity.csv
+  vector_store: data/vector_store.json
+  cases_in: cases/inputs
+  cases_out: cases/outputs
+
+thresholds:
+  fraud: 55.0
+  escalate: 30.0
+
+runner:
+  rag_top_k: 3
+  max_evidence_ids: 20
+
+ui:
+  title: Fraud Investigation Console
+  page_size: 20

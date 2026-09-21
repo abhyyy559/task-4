@@ -1,0 +1,98 @@
+{
+ "case_id": "case_16",
+ "verdict": "legit",
+ "fraud_pattern": null,
+ "confidence": 0.75,
+ "risk_score": 0.0,
+ "evidence_ids": [
+  "1065",
+  "EMAIL:employee@bigcorp.com",
+  "CARD:744444",
+  "DEVICE:corp-nat-7",
+  "TXN:1065"
+ ],
+ "transactions_reviewed": [
+  1065
+ ],
+ "entities_flagged": {
+  "cards": [
+   "744444"
+  ],
+  "devices": [
+   "corp-nat-7"
+  ],
+  "emails": [
+   "employee@bigcorp.com"
+  ],
+  "accounts": [
+   "acct-744444"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744444 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=0",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744444 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device corp-nat-7",
+   "node_count": 2
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "4 nodes within 2 hops of 1 txns",
+   "node_count": 4
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "device_spoofing_cluster-c0",
+   "score": 0.6126
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.4491
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c1",
+   "score": 0.3851
+  }
+ ],
+ "actions_taken": [],
+ "policy_decisions": [],
+ "amounts": {
+  "total": 55.0,
+  "max": 55.0,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 245623,
+   "event": "TXN 1065 amt=55.0 card=744444"
+  }
+ ],
+ "explanation": "Case case_16 (device_spoofing_cluster): verdict=legit with confidence 0.75 and risk score 0.0 over 1 transactions. Key signals: none strong. Pattern knowledge: device_spoofing_cluster-c0, account_takeover-c0, account_takeover-c1. Evidence: 1065, EMAIL:employee@bigcorp.com, CARD:744444, DEVICE:corp-nat-7, TXN:1065.",
+ "recommended_next_steps": [
+  "no action required",
+  "continue monitoring baseline"
+ ]
+}

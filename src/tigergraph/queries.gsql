@@ -1,0 +1,87 @@
+-- =====================================================================
+-- queries.gsql — 6 named FraudGraph queries (TigerGraph Savanna / GSQL)
+-- Part 1 (S2.1.2): q_card_ring, q_device_cluster, q_mule_fanout
+-- Part 2 (S2.1.3): q_takeover_anomaly, q_synthetic_identity, q_evidence_subgraph
+-- Every query returns evidence IDs (TransactionID txn_id values / node IDs).
+-- Graph: fraud_graph (see schema.gsql).
+-- =====================================================================
+USE GRAPH fraud_graph
+
+-- Q1: q_card_ring — card-not-present ring expansion.
+-- Params: card_id (CARD.card_id), start_dt/end_dt (TRANSACTION.dt window).
+-- Returns: Ring (TRANSACTION vertices: evidence txn_ids), plus linked
+--   Emails and Devices for pivot. Covers pattern A (card_not_present_ring).
+CREATE QUERY q_card_ring(STRING card_id, UINT start_dt, UINT end_dt) FOR GRAPH fraud_graph {
+  Seed = {CARD.*};
+  Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
+  Ring = SELECT t FROM Seed:s -(MADE_WITH)- TRANSACTION:t
+         WHERE t.dt BETWEEN start_dt AND end_dt;
+  Emails = SELECT e FROM Ring:t -(USED_EMAIL)- EMAIL:e;
+  Devices = SELECT d FROM Ring:t -(USED_DEVICE)- DEVICE:d;
+  PRINT Ring, Emails, Devices;
+}
+
+-- Q2: q_device_cluster — device-spoofing cluster expansion.
+-- Params: device (DEVICE.device fingerprint), min_cards (cluster threshold).
+-- Returns: Txns (TRANSACTION evidence IDs), Cards (CARD node IDs funnelled
+--   through the device). Covers pattern D (device_spoofing_cluster).
+CREATE QUERY q_device_cluster(STRING device, UINT min_cards) FOR GRAPH fraud_graph {
+  Seed = {DEVICE.*};
+  Seed = SELECT s FROM Seed:s WHERE s.device == device;
+  Txns = SELECT t FROM Seed:s -(USED_DEVICE)- TRANSACTION:t;
+  Cards = SELECT c FROM Txns:t -(MADE_WITH)- CARD:c;
+  PRINT Txns, Cards;
+}
+
+-- Q3: q_mule_fanout — money-mule fan-out from one hub card.
+-- Params: hub_card (CARD.card_id), start_dt/end_dt (TRANSACTION.dt window).
+-- Returns: Out (TRANSACTION evidence IDs ordered by dt), Recipients (EMAIL
+--   node IDs). Callers flag round-amount dispersal (identical integer amounts).
+--   Covers pattern C (money_mule_fanout).
+CREATE QUERY q_mule_fanout(STRING hub_card, UINT start_dt, UINT end_dt) FOR GRAPH fraud_graph {
+  Seed = {CARD.*};
+  Seed = SELECT s FROM Seed:s WHERE s.card_id == hub_card;
+  Out = SELECT t FROM Seed:s -(MADE_WITH)- TRANSACTION:t
+        WHERE t.dt BETWEEN start_dt AND end_dt
+        ORDER BY t.dt;
+  Recipients = SELECT e FROM Out:t -(USED_EMAIL)- EMAIL:e;
+  PRINT Out, Recipients;
+}
+
+-- Q4: q_takeover_anomaly — account-takeover anomaly for a card.
+-- Params: card_id (CARD.card_id), window_secs (velocity window over dt).
+-- Returns: Txns (TRANSACTION evidence IDs), Devices/Emails/Addrs showing
+--   addr/device/email change plus velocity. Covers pattern B (account_takeover).
+CREATE QUERY q_takeover_anomaly(STRING card_id, UINT window_secs) FOR GRAPH fraud_graph {
+  Seed = {CARD.*};
+  Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
+  Txns = SELECT t FROM Seed:s -(MADE_WITH)- TRANSACTION:t;
+  Devices = SELECT d FROM Txns:t -(USED_DEVICE)- DEVICE:d;
+  Emails = SELECT e FROM Txns:t -(USED_EMAIL)- EMAIL:e;
+  ShipAddrs = SELECT a FROM Txns:t -(SHIPPED_TO)- ADDRESS:a;
+  BillAddrs = SELECT a FROM Txns:t -(BILLED_TO)- ADDRESS:a;
+  PRINT Txns, Devices, Emails, ShipAddrs, BillAddrs;
+}
+
+-- Q5: q_synthetic_identity — synthetic-identity signals for a card.
+-- Params: card_id (CARD.card_id).
+-- Returns: Txns (TRANSACTION evidence IDs), Ids (IDENTITY vertices: thin-file
+--   C-counts, all-F M-flags, id_ mismatch signals). Covers pattern E.
+CREATE QUERY q_synthetic_identity(STRING card_id) FOR GRAPH fraud_graph {
+  Seed = {CARD.*};
+  Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
+  Txns = SELECT t FROM Seed:s -(MADE_WITH)- TRANSACTION:t;
+  Ids = SELECT i FROM Txns:t -(HAS_IDENTITY)- IDENTITY:i;
+  PRINT Txns, Ids;
+}
+
+-- Q6: q_evidence_subgraph — bounded k-hop evidence export around case entities.
+-- Params: txn_ids (seed TRANSACTION ids), hops (max traversal depth, default 2).
+-- Returns: Seed (TRANSACTION evidence IDs), N1 (1-hop CARD/DEVICE/EMAIL/
+--   ADDRESS/IDENTITY node IDs). Used by runner to build evidence_ids.
+CREATE QUERY q_evidence_subgraph(SET<UINT> txn_ids, INT hops = 2) FOR GRAPH fraud_graph {
+  Seed = {TRANSACTION.*};
+  Seed = SELECT s FROM Seed:s WHERE s.txn_id IN txn_ids;
+  N1 = SELECT n FROM Seed:s -((MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)-)- :n;
+  PRINT Seed, N1;
+}

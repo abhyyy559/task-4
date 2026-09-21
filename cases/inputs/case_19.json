@@ -1,0 +1,20 @@
+{
+ "case_id": "case_19",
+ "transaction_ids": [
+  1056,
+  1057
+ ],
+ "pattern": "synthetic_identity",
+ "description": "Borderline new immigrant thin file",
+ "label": "borderline: new immigrant thin file",
+ "subject": {
+  "card1": "855502",
+  "device": "low-end-3",
+  "account_id": "acct-855502",
+  "email": "synth07@freshmail.net"
+ },
+ "expected": {
+  "verdict": "escalate",
+  "fraud_pattern": null
+ }
+}

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fraud-agent"
+version = "0.1.0"
+description = "Agentic fraud investigation over IEEE-CIS-compatible data with TigerGraph, GraphRAG and Streamlit UI"
+requires-python = ">=3.11"
+dependencies = ["pyyaml", "numpy"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+ui = ["streamlit"]
+graph = ["langgraph"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

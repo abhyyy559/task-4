@@ -1,0 +1,269 @@
+{
+ "case_id": "case_13",
+ "verdict": "fraud",
+ "fraud_pattern": "device_spoofing_cluster",
+ "confidence": 0.95,
+ "risk_score": 100.0,
+ "evidence_ids": [
+  "1037",
+  "1038",
+  "1039",
+  "1040",
+  "EMAIL:ghost00@tempmail.cc",
+  "EMAIL:ghost01@tempmail.cc",
+  "EMAIL:ghost02@tempmail.cc",
+  "EMAIL:ghost03@tempmail.cc",
+  "1041",
+  "1042",
+  "1043",
+  "1044",
+  "1045",
+  "1046",
+  "1047",
+  "1048",
+  "CARD:744400",
+  "CARD:744401",
+  "CARD:744402",
+  "CARD:744403"
+ ],
+ "transactions_reviewed": [
+  1037,
+  1038,
+  1039,
+  1040
+ ],
+ "entities_flagged": {
+  "cards": [
+   "744400",
+   "744401",
+   "744402",
+   "744403"
+  ],
+  "devices": [
+   "emu-spoof-X1"
+  ],
+  "emails": [
+   "ghost00@tempmail.cc",
+   "ghost01@tempmail.cc",
+   "ghost02@tempmail.cc",
+   "ghost03@tempmail.cc"
+  ],
+  "accounts": [
+   "acct-744400"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744400 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744400 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744401 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744401 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744402 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744402 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744403 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744403 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "12 cards via device emu-spoof-X1",
+   "node_count": 24
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "21 nodes within 2 hops of 4 txns",
+   "node_count": 21
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "device_spoofing_cluster-c0",
+   "score": 0.6126
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.4491
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c1",
+   "score": 0.3851
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "freeze_card",
+   "target": "744400",
+   "status": "ok",
+   "policy_ref": "freeze-fraud-confident",
+   "ref": "FRE-3FADCB77"
+  },
+  {
+   "action": "freeze_card",
+   "target": "744401",
+   "status": "ok",
+   "policy_ref": "freeze-fraud-confident",
+   "ref": "FRE-4B3C70E4"
+  },
+  {
+   "action": "block_device",
+   "target": "emu-spoof-X1",
+   "status": "ok",
+   "policy_ref": "block-device-pattern",
+   "ref": "BLO-91D40772"
+  },
+  {
+   "action": "flag_email",
+   "target": "ghost00@tempmail.cc",
+   "status": "ok",
+   "policy_ref": "flag-email-fraud",
+   "ref": "FLA-7BB25D36"
+  },
+  {
+   "action": "escalate_case",
+   "target": "case_13",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-0F60EC4A"
+  },
+  {
+   "action": "notify_user",
+   "target": "ghost00@tempmail.cc",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-5C89BC54"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "freeze_card",
+   "decision": "allow",
+   "rule": "freeze-fraud-confident"
+  },
+  {
+   "action": "freeze_card",
+   "decision": "allow",
+   "rule": "freeze-fraud-confident"
+  },
+  {
+   "action": "block_device",
+   "decision": "allow",
+   "rule": "block-device-pattern"
+  },
+  {
+   "action": "flag_email",
+   "decision": "allow",
+   "rule": "flag-email-fraud"
+  },
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 1028.57,
+  "max": 371.28,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 250000,
+   "event": "TXN 1037 amt=251.86 card=744400"
+  },
+  {
+   "dt": 250420,
+   "event": "TXN 1038 amt=371.28 card=744401"
+  },
+  {
+   "dt": 250840,
+   "event": "TXN 1039 amt=235.21 card=744402"
+  },
+  {
+   "dt": 251260,
+   "event": "TXN 1040 amt=170.22 card=744403"
+  }
+ ],
+ "explanation": "Case case_13 (device_spoofing_cluster): verdict=fraud with confidence 0.95 and risk score 100.0 over 4 transactions. Key signals: rapid_velocity_1h, device_change, new_device_age. Pattern knowledge: device_spoofing_cluster-c0, account_takeover-c0, account_takeover-c1. Evidence: 1037, 1038, 1039, 1040, EMAIL:ghost00@tempmail.cc, EMAIL:ghost01@tempmail.cc, EMAIL:ghost02@tempmail.cc, EMAIL:ghost03@tempmail.cc.",
+ "recommended_next_steps": [
+  "confirm card freeze with cardholder",
+  "analyst review of evidence_ids",
+  "consider SAR filing / collect chargeback evidence pack"
+ ]
+}

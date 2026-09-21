@@ -1,0 +1,19 @@
+{
+ "case_id": "case_08",
+ "transaction_ids": [
+  1063
+ ],
+ "pattern": "account_takeover",
+ "description": "Negative control user upgraded phone",
+ "label": "negative control: user upgraded phone, stable profile legit",
+ "subject": {
+  "card1": "522223",
+  "device": "pixel-8-new",
+  "account_id": "acct-522223",
+  "email": "upgrade.d@gmail.com"
+ },
+ "expected": {
+  "verdict": "legit",
+  "fraud_pattern": null
+ }
+}

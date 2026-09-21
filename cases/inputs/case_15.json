@@ -1,0 +1,20 @@
+{
+ "case_id": "case_15",
+ "transaction_ids": [
+  1045,
+  1046
+ ],
+ "pattern": "device_spoofing_cluster",
+ "description": "Borderline shared kiosk device",
+ "label": "borderline: shared kiosk device",
+ "subject": {
+  "card1": "744408",
+  "device": "emu-spoof-X1",
+  "account_id": "acct-744408",
+  "email": "ghost08@tempmail.cc"
+ },
+ "expected": {
+  "verdict": "escalate",
+  "fraud_pattern": null
+ }
+}

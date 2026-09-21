@@ -1,0 +1,167 @@
+{
+ "case_id": "case_15",
+ "verdict": "escalate",
+ "fraud_pattern": null,
+ "confidence": 0.576,
+ "risk_score": 44.0,
+ "evidence_ids": [
+  "1045",
+  "1046",
+  "EMAIL:ghost08@tempmail.cc",
+  "EMAIL:ghost09@tempmail.cc",
+  "1037",
+  "1038",
+  "1039",
+  "1040",
+  "1041",
+  "1042",
+  "1043",
+  "1044",
+  "1047",
+  "1048",
+  "CARD:744408",
+  "CARD:744409",
+  "DEVICE:emu-spoof-X1",
+  "TXN:1037",
+  "TXN:1038",
+  "TXN:1039"
+ ],
+ "transactions_reviewed": [
+  1045,
+  1046
+ ],
+ "entities_flagged": {
+  "cards": [
+   "744408",
+   "744409"
+  ],
+  "devices": [
+   "emu-spoof-X1"
+  ],
+  "emails": [
+   "ghost08@tempmail.cc",
+   "ghost09@tempmail.cc"
+  ],
+  "accounts": [
+   "acct-744408"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744408 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744408 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 744409 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=9",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 744409 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "12 cards via device emu-spoof-X1",
+   "node_count": 24
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "17 nodes within 2 hops of 2 txns",
+   "node_count": 17
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "device_spoofing_cluster-c0",
+   "score": 0.6126
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.4491
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c1",
+   "score": 0.3851
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "escalate_case",
+   "target": "case_15",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-41570F8D"
+  },
+  {
+   "action": "notify_user",
+   "target": "ghost08@tempmail.cc",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-1547C4DF"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 1250.19,
+  "max": 648.58,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 253360,
+   "event": "TXN 1045 amt=601.61 card=744408"
+  },
+  {
+   "dt": 253780,
+   "event": "TXN 1046 amt=648.58 card=744409"
+  }
+ ],
+ "explanation": "Case case_15 (device_spoofing_cluster): verdict=escalate with confidence 0.576 and risk score 44.0 over 2 transactions. Key signals: device_change, new_device_age. Pattern knowledge: device_spoofing_cluster-c0, account_takeover-c0, account_takeover-c1. Evidence: 1045, 1046, EMAIL:ghost08@tempmail.cc, EMAIL:ghost09@tempmail.cc, 1037, 1038, 1039, 1040.",
+ "recommended_next_steps": [
+  "manual review of evidence_ids",
+  "request step-up authentication from cardholder",
+  "re-run after 24h of additional transactions"
+ ]
+}

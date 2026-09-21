@@ -1,0 +1,22 @@
+{
+ "case_id": "case_09",
+ "transaction_ids": [
+  1025,
+  1026,
+  1027,
+  1028
+ ],
+ "pattern": "money_mule_fanout",
+ "description": "Mule 1-to-N rapid dispersal",
+ "label": "Mule: hub card 633333 fans out to many recipients",
+ "subject": {
+  "card1": "633333",
+  "device": "hub-moto-g",
+  "account_id": "acct-633333",
+  "email": "hub.mule@fast.cc"
+ },
+ "expected": {
+  "verdict": "fraud",
+  "fraud_pattern": "money_mule_fanout"
+ }
+}

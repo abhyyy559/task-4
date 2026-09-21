@@ -1,0 +1,20 @@
+{
+ "case_id": "case_03",
+ "transaction_ids": [
+  1009,
+  1010
+ ],
+ "pattern": "card_not_present_ring",
+ "description": "Borderline shared card legit-looking amounts",
+ "label": "borderline shared card, moderate velocity",
+ "subject": {
+  "card1": "411111",
+  "device": "ring-dev-2",
+  "account_id": "acct-411111",
+  "email": "ring.buyer@ringmail.cc"
+ },
+ "expected": {
+  "verdict": "escalate",
+  "fraud_pattern": null
+ }
+}

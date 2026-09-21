@@ -1,0 +1,22 @@
+{
+ "case_id": "case_14",
+ "transaction_ids": [
+  1041,
+  1042,
+  1043,
+  1044
+ ],
+ "pattern": "device_spoofing_cluster",
+ "description": "Emulator fingerprint reuse at scale",
+ "label": "Spoof: emulator fingerprint automated fraud",
+ "subject": {
+  "card1": "744404",
+  "device": "emu-spoof-X1",
+  "account_id": "acct-744404",
+  "email": "ghost04@tempmail.cc"
+ },
+ "expected": {
+  "verdict": "fraud",
+  "fraud_pattern": "device_spoofing_cluster"
+ }
+}

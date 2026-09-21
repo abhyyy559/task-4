@@ -1,0 +1,22 @@
+{
+ "case_id": "case_06",
+ "transaction_ids": [
+  1019,
+  1020,
+  1021,
+  1022
+ ],
+ "pattern": "account_takeover",
+ "description": "Takeover email change plus high amount drain",
+ "label": "Takeover: recipient email change plus 10x amount",
+ "subject": {
+  "card1": "522222",
+  "device": "attacker-fresh-01",
+  "account_id": "acct-522222",
+  "email": "victim.a@post.com"
+ },
+ "expected": {
+  "verdict": "fraud",
+  "fraud_pattern": "account_takeover"
+ }
+}

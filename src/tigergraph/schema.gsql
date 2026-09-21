@@ -1,0 +1,139 @@
+-- =====================================================================
+-- schema.gsql — FraudGraph schema DDL (TigerGraph Savanna / GSQL)
+-- Dataset: data/HHGOA_IEEE/ (IEEE-CIS-compatible stub, see PLAN.md sections 2, 6)
+-- Convention: UPPER vertex names; primary keys via primary_id_as_attribute.
+-- =====================================================================
+
+-- Drop-then-create is handled by the loader script; this file is declarative.
+-- USE GRAPH fraud_graph
+
+-- TRANSACTION: one row of data/HHGOA_IEEE/transactions.csv.
+--   TransactionID -> txn_id (PK) | TransactionAmt -> amt
+--   TransactionDT -> dt | ProductCD -> product_cd | isFraud -> is_fraud (label, benchmark only)
+CREATE VERTEX TRANSACTION (
+  PRIMARY_ID txn_id UINT,
+  amt DOUBLE,
+  dt UINT,
+  product_cd STRING,
+  is_fraud UINT
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- CARD: payment instrument; card1 is the ring linkage key.
+--   card1 -> card_id (PK) | card4 (brand) -> brand | card2/3/5/6 kept as attributes
+CREATE VERTEX CARD (
+  PRIMARY_ID card_id STRING,
+  brand STRING,
+  card2 STRING,
+  card3 STRING,
+  card5 STRING,
+  card6 STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- EMAIL: P_emaildomain (role=purchaser) / R_emaildomain (role=recipient) values.
+CREATE VERTEX EMAIL (
+  PRIMARY_ID email STRING,
+  role STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- DEVICE: DeviceInfo fingerprint (spoof-cluster key) + DeviceType class.
+CREATE VERTEX DEVICE (
+  PRIMARY_ID device STRING,
+  dtype STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- ADDRESS: addr1 (billing) / addr2 (shipping) area codes; change = takeover signal.
+CREATE VERTEX ADDRESS (
+  PRIMARY_ID code STRING,
+  kind STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- IDENTITY: one row of data/HHGOA_IEEE/identity.csv keyed by TransactionID.
+--   TransactionID -> txn_id (PK) | id_01..id_12 -> id_01..id_12 | DeviceType/Info mirrored
+CREATE VERTEX IDENTITY (
+  PRIMARY_ID txn_id UINT,
+  id_01 DOUBLE, id_02 DOUBLE, id_03 STRING, id_04 STRING,
+  id_05 DOUBLE, id_06 DOUBLE, id_07 DOUBLE, id_08 DOUBLE,
+  id_09 STRING, id_10 STRING, id_11 DOUBLE, id_12 DOUBLE,
+  device_type STRING, device_info STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- MERCHANT: ProductCD (W/C/H/S/R) product bucket acting as merchant proxy.
+CREATE VERTEX MERCHANT (
+  PRIMARY_ID product_cd STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- CASE: one benchmark case from cases/inputs/case_NN.json.
+CREATE VERTEX CASE (
+  PRIMARY_ID case_id STRING,
+  pattern STRING,
+  verdict STRING,
+  confidence DOUBLE,
+  risk_score DOUBLE
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- EVIDENCE: a cited node (TransactionID or CARD:/DEVICE:/EMAIL: node id) for a case.
+CREATE VERTEX EVIDENCE (
+  PRIMARY_ID evidence_id STRING,
+  kind STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- FINDING: one graph/rag finding attached to a case (query + summary + node_count).
+CREATE VERTEX FINDING (
+  PRIMARY_ID finding_id STRING,
+  query STRING,
+  summary STRING,
+  node_count UINT
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- ACTION: a policy-gated side-effect taken (freeze/escalate/notify) for a case.
+CREATE VERTEX ACTION (
+  PRIMARY_ID action_id STRING,
+  action STRING,
+  target STRING,
+  status STRING,
+  policy_ref STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- POLICY: one rule from config/policies.yaml referenced by policy_decisions.
+CREATE VERTEX POLICY (
+  PRIMARY_ID policy_ref STRING,
+  decision STRING,
+  rule STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- PATTERN: one of the 5 fraud patterns in data/HHGOA_IEEE/patterns.md (GraphRAG seed).
+CREATE VERTEX PATTERN (
+  PRIMARY_ID pattern STRING,
+  description STRING,
+  severity STRING
+) WITH primary_id_as_attribute="true", STATS="OUTDEGREE_BY_EDGETYPE"
+
+-- ------------------------------- edges ------------------------------------
+-- Transaction -> entity linkage (PLAN.md section 6 mapping table)
+CREATE UNDIRECTED EDGE MADE_WITH (FROM TRANSACTION, TO CARD)         -- payment instrument
+CREATE UNDIRECTED EDGE USED_EMAIL (FROM TRANSACTION, TO EMAIL)       -- purchaser/recipient email
+CREATE UNDIRECTED EDGE USED_DEVICE (FROM TRANSACTION, TO DEVICE)     -- device used
+CREATE UNDIRECTED EDGE SHIPPED_TO (FROM TRANSACTION, TO ADDRESS)     -- shipping geo (addr2)
+CREATE UNDIRECTED EDGE BILLED_TO (FROM TRANSACTION, TO ADDRESS)      -- billing geo (addr1)
+CREATE UNDIRECTED EDGE HAS_IDENTITY (FROM TRANSACTION, TO IDENTITY)  -- identity profile
+CREATE UNDIRECTED EDGE SOLD_BY (FROM TRANSACTION, TO MERCHANT)       -- product/merchant
+-- Derived transaction <-> transaction hops for ring/cluster traversal
+CREATE UNDIRECTED EDGE SAME_CARD (FROM TRANSACTION, TO TRANSACTION)
+CREATE UNDIRECTED EDGE SAME_DEVICE (FROM TRANSACTION, TO TRANSACTION)
+CREATE UNDIRECTED EDGE SAME_EMAIL (FROM TRANSACTION, TO TRANSACTION)
+-- Case linkage: every investigation cites evidence, findings, actions, patterns
+CREATE DIRECTED EDGE CASE_HAS_EVIDENCE (FROM CASE, TO EVIDENCE)
+CREATE DIRECTED EDGE CASE_HAS_FINDING (FROM CASE, TO FINDING)
+CREATE DIRECTED EDGE CASE_RECOMMENDED_ACTION (FROM CASE, TO ACTION)
+CREATE DIRECTED EDGE CASE_MATCHES_PATTERN (FROM CASE, TO PATTERN)
+CREATE DIRECTED EDGE CASE_SIMILAR_TO_CASE (FROM CASE, TO CASE)
+
+-- -------------------------------- graph -----------------------------------
+CREATE GRAPH fraud_graph (
+  TRANSACTION, CARD, EMAIL, DEVICE, ADDRESS, IDENTITY, MERCHANT,
+  CASE, EVIDENCE, FINDING, ACTION, POLICY, PATTERN,
+  MADE_WITH, USED_EMAIL, USED_DEVICE, SHIPPED_TO, BILLED_TO,
+  HAS_IDENTITY, SOLD_BY, SAME_CARD, SAME_DEVICE, SAME_EMAIL,
+  CASE_HAS_EVIDENCE, CASE_HAS_FINDING, CASE_RECOMMENDED_ACTION,
+  CASE_MATCHES_PATTERN, CASE_SIMILAR_TO_CASE
+)

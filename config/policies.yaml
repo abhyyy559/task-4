@@ -1,0 +1,85 @@
+# Action policy rules for fraud-agent.
+# Two spec styles share this file (both enforced by src/agent/policy.py):
+# - rule-list style (first matching `when` wins; allow | deny | escalate).
+#   Context keys: verdict (fraud|legit|escalate), confidence (0-1),
+#   fraud_pattern (str|null).
+# - approval style (side-effect actions; approval: none | role).
+#   Enforced via check_action()/requires_approval()/get_approver()/decide().
+
+version: 1
+
+defaults:
+  decision: deny
+  rule: default-deny
+
+thresholds: {risk_high: 0.7, risk_medium: 0.4}
+
+thresholds:
+  uncertainty_high: 0.6
+  uncertainty_low: 0.3
+  risk_high: 0.7
+  risk_medium: 0.4
+
+actions:
+  freeze_card:
+    - {when: "verdict == 'fraud' and confidence >= 0.7", decision: allow, rule: freeze-fraud-confident}
+    - {when: "verdict == 'fraud'", decision: escalate, rule: freeze-fraud-unconfident}
+    - {when: "verdict == 'escalate'", decision: escalate, rule: freeze-escalate-review}
+    - {when: "verdict == 'legit'", decision: deny, rule: freeze-legit-deny}
+  block_device:
+    - {when: "verdict == 'fraud' and fraud_pattern in ('device_spoofing_cluster', 'account_takeover')", decision: allow, rule: block-device-pattern}
+    - {when: "verdict == 'fraud'", decision: escalate, rule: block-device-review}
+    - {when: "True", decision: deny, rule: block-device-deny}
+  flag_email:
+    - {when: "verdict == 'fraud'", decision: allow, rule: flag-email-fraud}
+    - {when: "verdict == 'escalate'", decision: escalate, rule: flag-email-review}
+    - {when: "True", decision: deny, rule: flag-email-deny}
+  notify_user:
+    - {when: "True", decision: allow, rule: notify-always}
+  escalate_case:
+    - {when: "verdict != 'legit'", decision: allow, rule: escalate-nonlegit}
+    - {when: "True", decision: deny, rule: escalate-legit-deny}
+  refund_transaction:
+    - {when: "verdict == 'fraud' and confidence >= 0.9", decision: escalate, rule: refund-human-review}
+    - {when: "True", decision: deny, rule: refund-deny}
+  # Approval-style side-effect actions (S4.2.1).
+  allow_transaction:
+    description: "Approve the transaction to proceed."
+    approval: none
+    approver: none
+  block_transaction:
+    description: "Decline the transaction."
+    approval: fraud_analyst
+    approver: fraud_analyst
+  monitor_account:
+    description: "Place the account under enhanced monitoring."
+    approval: none
+    approver: none
+  freeze_account:
+    description: "Freeze the account pending review."
+    approval: fraud_analyst
+    approver: fraud_analyst
+  warn_customer:
+    description: "Notify the customer of suspicious activity."
+    approval: none
+    approver: none
+  create_case:
+    description: "Open an investigation case for analysts."
+    approval: none
+    approver: none
+  file_sar:
+    description: "File a Suspicious Activity Report."
+    approval: compliance
+    approver: compliance
+  request_more_evidence:
+    description: "Request additional evidence before deciding."
+    approval: none
+    approver: none
+  escalate_to_analyst:
+    description: "Escalate the case to a human analyst."
+    approval: none
+    approver: none
+  request_step_up_auth:
+    description: "Challenge the user with step-up authentication."
+    approval: none
+    approver: none

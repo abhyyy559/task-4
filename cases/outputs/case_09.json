@@ -1,0 +1,194 @@
+{
+ "case_id": "case_09",
+ "verdict": "fraud",
+ "fraud_pattern": "money_mule_fanout",
+ "confidence": 0.95,
+ "risk_score": 100.0,
+ "evidence_ids": [
+  "1025",
+  "1026",
+  "1027",
+  "1028",
+  "1029",
+  "1030",
+  "1031",
+  "1032",
+  "1033",
+  "1034",
+  "1035",
+  "1036",
+  "CARD:633333",
+  "DEVICE:hub-moto-g",
+  "EMAIL:hub.mule@fast.cc",
+  "EMAIL:mule00@fast.cc",
+  "EMAIL:mule01@fast.cc",
+  "EMAIL:mule02@fast.cc",
+  "EMAIL:mule03@fast.cc",
+  "TXN:1025"
+ ],
+ "transactions_reviewed": [
+  1025,
+  1026,
+  1027,
+  1028
+ ],
+ "entities_flagged": {
+  "cards": [
+   "633333"
+  ],
+  "devices": [
+   "hub-moto-g"
+  ],
+  "emails": [
+   "hub.mule@fast.cc",
+   "mule00@fast.cc",
+   "mule01@fast.cc",
+   "mule02@fast.cc",
+   "mule03@fast.cc"
+  ],
+  "accounts": [
+   "acct-633333"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "12 txns share card 633333 in window",
+   "node_count": 12
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 12 txns: device_change=False",
+   "node_count": 12
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=72",
+   "node_count": 12
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 633333 fans out to 12 recipients",
+   "node_count": 24
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device hub-moto-g",
+   "node_count": 13
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "19 nodes within 2 hops of 4 txns",
+   "node_count": 19
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c0",
+   "score": 0.5471
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c1",
+   "score": 0.4207
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c1",
+   "score": 0.354
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "freeze_card",
+   "target": "633333",
+   "status": "ok",
+   "policy_ref": "freeze-fraud-confident",
+   "ref": "FRE-E6C8E93C"
+  },
+  {
+   "action": "block_device",
+   "target": "hub-moto-g",
+   "status": "blocked:escalate",
+   "policy_ref": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "target": "hub.mule@fast.cc",
+   "status": "ok",
+   "policy_ref": "flag-email-fraud",
+   "ref": "FLA-A3E1EE2D"
+  },
+  {
+   "action": "escalate_case",
+   "target": "case_09",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-4F14F275"
+  },
+  {
+   "action": "notify_user",
+   "target": "hub.mule@fast.cc",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-DFA80E65"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "freeze_card",
+   "decision": "allow",
+   "rule": "freeze-fraud-confident"
+  },
+  {
+   "action": "block_device",
+   "decision": "escalate",
+   "rule": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "decision": "allow",
+   "rule": "flag-email-fraud"
+  },
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 3600.0,
+  "max": 900.0,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 200000,
+   "event": "TXN 1025 amt=900.0 card=633333"
+  },
+  {
+   "dt": 200300,
+   "event": "TXN 1026 amt=900.0 card=633333"
+  },
+  {
+   "dt": 200600,
+   "event": "TXN 1027 amt=900.0 card=633333"
+  },
+  {
+   "dt": 200900,
+   "event": "TXN 1028 amt=900.0 card=633333"
+  }
+ ],
+ "explanation": "Case case_09 (money_mule_fanout): verdict=fraud with confidence 0.95 and risk score 100.0 over 4 transactions. Key signals: rapid_velocity_1h. Pattern knowledge: money_mule_fanout-c0, money_mule_fanout-c1, synthetic_identity-c1. Evidence: 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032.",
+ "recommended_next_steps": [
+  "confirm card freeze with cardholder",
+  "analyst review of evidence_ids",
+  "consider SAR filing / collect chargeback evidence pack"
+ ]
+}

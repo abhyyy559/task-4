@@ -1,0 +1,127 @@
+{
+ "case_id": "case_11",
+ "verdict": "escalate",
+ "fraud_pattern": null,
+ "confidence": 0.54,
+ "risk_score": 35.0,
+ "evidence_ids": [
+  "1064",
+  "EMAIL:emp.101@acmecorp.com",
+  "CARD:633334",
+  "DEVICE:acme-managed-01",
+  "EMAIL:payroll@acmecorp.com",
+  "TXN:1064"
+ ],
+ "transactions_reviewed": [
+  1064
+ ],
+ "entities_flagged": {
+  "cards": [
+   "633334"
+  ],
+  "devices": [
+   "acme-managed-01"
+  ],
+  "emails": [
+   "emp.101@acmecorp.com",
+   "payroll@acmecorp.com"
+  ],
+  "accounts": [
+   "acct-633334"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 633334 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=0",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 633334 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device acme-managed-01",
+   "node_count": 2
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "5 nodes within 2 hops of 1 txns",
+   "node_count": 5
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c0",
+   "score": 0.5471
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c1",
+   "score": 0.4207
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c1",
+   "score": 0.354
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "escalate_case",
+   "target": "case_11",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-F18B38EA"
+  },
+  {
+   "action": "notify_user",
+   "target": "payroll@acmecorp.com",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-C4670FCA"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 1850.5,
+  "max": 1850.5,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 389642,
+   "event": "TXN 1064 amt=1850.5 card=633334"
+  }
+ ],
+ "explanation": "Case case_11 (money_mule_fanout): verdict=escalate with confidence 0.54 and risk score 35.0 over 1 transactions. Key signals: amount_spike. Pattern knowledge: money_mule_fanout-c0, money_mule_fanout-c1, synthetic_identity-c1. Evidence: 1064, EMAIL:emp.101@acmecorp.com, CARD:633334, DEVICE:acme-managed-01, EMAIL:payroll@acmecorp.com, TXN:1064.",
+ "recommended_next_steps": [
+  "manual review of evidence_ids",
+  "request step-up authentication from cardholder",
+  "re-run after 24h of additional transactions"
+ ]
+}

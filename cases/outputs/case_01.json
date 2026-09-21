@@ -1,0 +1,204 @@
+{
+ "case_id": "case_01",
+ "verdict": "fraud",
+ "fraud_pattern": "card_not_present_ring",
+ "confidence": 0.95,
+ "risk_score": 100.0,
+ "evidence_ids": [
+  "1001",
+  "1002",
+  "1003",
+  "1004",
+  "1005",
+  "1006",
+  "1007",
+  "1008",
+  "1009",
+  "1010",
+  "1011",
+  "1012",
+  "CARD:411111",
+  "DEVICE:ring-dev-0",
+  "DEVICE:ring-dev-1",
+  "DEVICE:ring-dev-2",
+  "EMAIL:drop00@ringmail.cc",
+  "EMAIL:drop03@ringmail.cc",
+  "EMAIL:ring.buyer@ringmail.cc",
+  "TXN:1001"
+ ],
+ "transactions_reviewed": [
+  1001,
+  1002,
+  1003,
+  1004
+ ],
+ "entities_flagged": {
+  "cards": [
+   "411111"
+  ],
+  "devices": [
+   "ring-dev-0",
+   "ring-dev-1",
+   "ring-dev-2"
+  ],
+  "emails": [
+   "drop00@ringmail.cc",
+   "drop03@ringmail.cc",
+   "ring.buyer@ringmail.cc"
+  ],
+  "accounts": [
+   "acct-411111"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "12 txns share card 411111 in window",
+   "node_count": 12
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 12 txns: device_change=True",
+   "node_count": 12
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=72",
+   "node_count": 12
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 411111 fans out to 5 recipients",
+   "node_count": 17
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device ring-dev-0",
+   "node_count": 5
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device ring-dev-1",
+   "node_count": 5
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device ring-dev-2",
+   "node_count": 5
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "19 nodes within 2 hops of 4 txns",
+   "node_count": 19
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "card_not_present_ring-c0",
+   "score": 0.5276
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "card_not_present_ring-c1",
+   "score": 0.4114
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.3896
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "freeze_card",
+   "target": "411111",
+   "status": "ok",
+   "policy_ref": "freeze-fraud-confident",
+   "ref": "FRE-32B35BB9"
+  },
+  {
+   "action": "block_device",
+   "target": "ring-dev-0",
+   "status": "blocked:escalate",
+   "policy_ref": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "target": "ring.buyer@ringmail.cc",
+   "status": "ok",
+   "policy_ref": "flag-email-fraud",
+   "ref": "FLA-6F648785"
+  },
+  {
+   "action": "escalate_case",
+   "target": "case_01",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-4A580AA6"
+  },
+  {
+   "action": "notify_user",
+   "target": "ring.buyer@ringmail.cc",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-660DB58F"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "freeze_card",
+   "decision": "allow",
+   "rule": "freeze-fraud-confident"
+  },
+  {
+   "action": "block_device",
+   "decision": "escalate",
+   "rule": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "decision": "allow",
+   "rule": "flag-email-fraud"
+  },
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 1157.36,
+  "max": 436.05,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 100000,
+   "event": "TXN 1001 amt=286.02 card=411111"
+  },
+  {
+   "dt": 100240,
+   "event": "TXN 1002 amt=436.05 card=411111"
+  },
+  {
+   "dt": 100480,
+   "event": "TXN 1003 amt=282.94 card=411111"
+  },
+  {
+   "dt": 100720,
+   "event": "TXN 1004 amt=152.35 card=411111"
+  }
+ ],
+ "explanation": "Case case_01 (card_not_present_ring): verdict=fraud with confidence 0.95 and risk score 100.0 over 4 transactions. Key signals: rapid_velocity_1h, device_change, new_device_age. Pattern knowledge: card_not_present_ring-c0, card_not_present_ring-c1, account_takeover-c0. Evidence: 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008.",
+ "recommended_next_steps": [
+  "confirm card freeze with cardholder",
+  "analyst review of evidence_ids",
+  "consider SAR filing / collect chargeback evidence pack"
+ ]
+}
