@@ -85,9 +85,10 @@ class InvestigationState(TypedDict, total=False):
     status: str
     # evidence loop
     missing_evidence: list[str]
-    extra_evidence_requested: bool
+    extra_evidence_requested: list[dict[str, Any]]
     next_best_action_before_extra_evidence: str
     next_best_action_after_extra_evidence: str
+    graph_writeback: dict[str, Any]
     # actions / policy
     recommended_actions: list[dict[str, Any]]
     approval_route: str
@@ -127,7 +128,7 @@ def new_state(case: dict[str, Any]) -> InvestigationState:
         uncertainty=0.5,
         status="open",
         missing_evidence=[],
-        extra_evidence_requested=False,
+        extra_evidence_requested=[],
         next_best_action_before_extra_evidence="",
         next_best_action_after_extra_evidence="",
         recommended_actions=[],

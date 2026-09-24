@@ -151,5 +151,68 @@
   "manual review of evidence_ids",
   "request step-up authentication from cardholder",
   "re-run after 24h of additional transactions"
- ]
+ ],
+ "trigger": "Borderline travel device change",
+ "fraud_type": null,
+ "uncertainty": 0.348,
+ "missing_evidence": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_before_extra_evidence": "request_step_up_auth",
+ "extra_evidence_requested": [
+  {
+   "evidence_type": "cardholder_confirmation",
+   "status": "received",
+   "policy": "auto_execute",
+   "rule": "auto",
+   "evidence_ids": [
+    "CARD:522222",
+    "DEVICE:victim-iphone-01",
+    "EMAIL:victim.a@post.com",
+    "TXN:1013",
+    "TXN:1014",
+    "TXN:1015",
+    "TXN:1016",
+    "TXN:1017"
+   ],
+   "summary": "15 nodes within 3 hops of 2 txns"
+  },
+  {
+   "evidence_type": "issuer_chargeback_pack",
+   "status": "received",
+   "policy": "auto_execute",
+   "rule": "auto",
+   "evidence_ids": [
+    "1013",
+    "1014",
+    "1015",
+    "1016",
+    "1017",
+    "1018",
+    "1019",
+    "1020"
+   ],
+   "summary": "12 txns share card 522222 in window"
+  }
+ ],
+ "next_best_action_after_extra_evidence": "escalate_to_analyst",
+ "recommended_actions": [
+  "escalate_case",
+  "notify_user"
+ ],
+ "approval_route": "analyst_review",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_07",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
 }

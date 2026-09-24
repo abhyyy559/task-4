@@ -1,0 +1,168 @@
+{
+ "case_id": "case_12",
+ "verdict": "legit",
+ "fraud_pattern": null,
+ "confidence": 0.62,
+ "risk_score": 26.0,
+ "evidence_ids": [
+  "1067",
+  "1068",
+  "EMAIL:user1067@example.com",
+  "EMAIL:user1068@example.com",
+  "1086",
+  "1105",
+  "1106",
+  "1122",
+  "1132",
+  "1137",
+  "1164",
+  "CARD:900508",
+  "CARD:902143",
+  "CARD:903429",
+  "CARD:904225",
+  "1126",
+  "CARD:904592",
+  "CARD:907245",
+  "DEVICE:office-pc-02",
+  "DEVICE:office-pc-07"
+ ],
+ "transactions_reviewed": [
+  1067,
+  1068
+ ],
+ "entities_flagged": {
+  "cards": [
+   "904225",
+   "904592"
+  ],
+  "devices": [
+   "office-pc-02",
+   "office-pc-07"
+  ],
+  "emails": [
+   "user1067@example.com",
+   "user1068@example.com"
+  ],
+  "accounts": [
+   "acct-904225"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 904225 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=2",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 904225 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 904592 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=3",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 904592 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "8 cards via device office-pc-02",
+   "node_count": 16
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "2 cards via device office-pc-07",
+   "node_count": 4
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "16 nodes within 2 hops of 2 txns",
+   "node_count": 16
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c0",
+   "score": 0.5471
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c1",
+   "score": 0.4207
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c1",
+   "score": 0.354
+  }
+ ],
+ "actions_taken": [],
+ "policy_decisions": [],
+ "amounts": {
+  "total": 952.31,
+  "max": 498.64,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 83472,
+   "event": "TXN 1068 amt=498.64 card=904592"
+  },
+  {
+   "dt": 211146,
+   "event": "TXN 1067 amt=453.67 card=904225"
+  }
+ ],
+ "explanation": "Case case_12 (money_mule_fanout): verdict=legit with confidence 0.62 and risk score 26.0 over 2 transactions. Key signals: device_change, thin_file. Pattern knowledge: money_mule_fanout-c0, money_mule_fanout-c1, synthetic_identity-c1. Evidence: 1067, 1068, EMAIL:user1067@example.com, EMAIL:user1068@example.com, 1086, 1105, 1106, 1122.",
+ "recommended_next_steps": [
+  "no action required",
+  "continue monitoring baseline"
+ ],
+ "trigger": "Negative control marketplace payouts",
+ "fraud_type": null,
+ "uncertainty": 0.38,
+ "missing_evidence": [],
+ "next_best_action_before_extra_evidence": "allow_transaction",
+ "extra_evidence_requested": [],
+ "next_best_action_after_extra_evidence": "allow_transaction",
+ "recommended_actions": [],
+ "approval_route": "auto",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_12",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
+}

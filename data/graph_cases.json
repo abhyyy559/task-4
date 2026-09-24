@@ -1,0 +1,415 @@
+{
+ "case_01": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_01",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "card_not_present_ring",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1001,
+   1002,
+   1003,
+   1004
+  ],
+  "verdict": "fraud"
+ },
+ "case_02": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_02",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "card_not_present_ring",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1005,
+   1006,
+   1007,
+   1008
+  ],
+  "verdict": "fraud"
+ },
+ "case_03": {
+  "actions_taken": [
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_03",
+  "confidence": 0.664,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 66.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1009,
+   1010
+  ],
+  "verdict": "escalate"
+ },
+ "case_04": {
+  "actions_taken": [],
+  "case_id": "case_04",
+  "confidence": 0.75,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 0.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1061,
+   1062
+  ],
+  "verdict": "legit"
+ },
+ "case_05": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_05",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "account_takeover",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1013,
+   1017,
+   1018,
+   1021
+  ],
+  "verdict": "fraud"
+ },
+ "case_06": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_06",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "account_takeover",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1019,
+   1020,
+   1021,
+   1022
+  ],
+  "verdict": "fraud"
+ },
+ "case_07": {
+  "actions_taken": [
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_07",
+  "confidence": 0.652,
+  "evidence_ids": [
+   "CARD:522222",
+   "DEVICE:victim-iphone-01",
+   "EMAIL:victim.a@post.com",
+   "TXN:1013",
+   "TXN:1014",
+   "TXN:1015",
+   "TXN:1016",
+   "TXN:1017",
+   "1013",
+   "1014",
+   "1015",
+   "1016",
+   "1017",
+   "1018",
+   "1019",
+   "1020"
+  ],
+  "fraud_pattern": null,
+  "risk_score": 38.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1015,
+   1016
+  ],
+  "verdict": "escalate"
+ },
+ "case_08": {
+  "actions_taken": [],
+  "case_id": "case_08",
+  "confidence": 0.75,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 0.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1063
+  ],
+  "verdict": "legit"
+ },
+ "case_09": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_09",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "money_mule_fanout",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1025,
+   1026,
+   1027,
+   1028
+  ],
+  "verdict": "fraud"
+ },
+ "case_10": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_10",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "money_mule_fanout",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1029,
+   1030,
+   1031,
+   1032
+  ],
+  "verdict": "fraud"
+ },
+ "case_11": {
+  "actions_taken": [
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_11",
+  "confidence": 0.59,
+  "evidence_ids": [
+   "CARD:633334",
+   "DEVICE:acme-managed-01",
+   "EMAIL:emp.101@acmecorp.com",
+   "EMAIL:payroll@acmecorp.com",
+   "TXN:1064"
+  ],
+  "fraud_pattern": null,
+  "risk_score": 35.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1064
+  ],
+  "verdict": "escalate"
+ },
+ "case_12": {
+  "actions_taken": [],
+  "case_id": "case_12",
+  "confidence": 0.62,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 26.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1067,
+   1068
+  ],
+  "verdict": "legit"
+ },
+ "case_13": {
+  "actions_taken": [
+   "freeze_card",
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_13",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "device_spoofing_cluster",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1037,
+   1038,
+   1039,
+   1040
+  ],
+  "verdict": "fraud"
+ },
+ "case_14": {
+  "actions_taken": [
+   "freeze_card",
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_14",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "device_spoofing_cluster",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1041,
+   1042,
+   1043,
+   1044
+  ],
+  "verdict": "fraud"
+ },
+ "case_15": {
+  "actions_taken": [
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_15",
+  "confidence": 0.676,
+  "evidence_ids": [
+   "CARD:744408",
+   "CARD:744409",
+   "DEVICE:emu-spoof-X1",
+   "EMAIL:ghost08@tempmail.cc",
+   "EMAIL:ghost09@tempmail.cc",
+   "TXN:1037",
+   "TXN:1038",
+   "TXN:1039",
+   "1037",
+   "1038",
+   "1039",
+   "1040",
+   "1041",
+   "1042",
+   "1043",
+   "1044"
+  ],
+  "fraud_pattern": null,
+  "risk_score": 44.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1045,
+   1046
+  ],
+  "verdict": "escalate"
+ },
+ "case_16": {
+  "actions_taken": [],
+  "case_id": "case_16",
+  "confidence": 0.75,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 0.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1065
+  ],
+  "verdict": "legit"
+ },
+ "case_17": {
+  "actions_taken": [
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_17",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "synthetic_identity",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1049,
+   1050,
+   1051
+  ],
+  "verdict": "fraud"
+ },
+ "case_18": {
+  "actions_taken": [
+   "freeze_card",
+   "freeze_card",
+   "block_device",
+   "flag_email",
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_18",
+  "confidence": 0.95,
+  "evidence_ids": [],
+  "fraud_pattern": "synthetic_identity",
+  "risk_score": 100.0,
+  "sar_required": true,
+  "transaction_ids": [
+   1052,
+   1053,
+   1054,
+   1055
+  ],
+  "verdict": "fraud"
+ },
+ "case_19": {
+  "actions_taken": [
+   "escalate_case",
+   "notify_user"
+  ],
+  "case_id": "case_19",
+  "confidence": 0.648,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 62.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1056,
+   1057
+  ],
+  "verdict": "escalate"
+ },
+ "case_20": {
+  "actions_taken": [],
+  "case_id": "case_20",
+  "confidence": 0.73,
+  "evidence_ids": [],
+  "fraud_pattern": null,
+  "risk_score": 4.0,
+  "sar_required": false,
+  "transaction_ids": [
+   1066
+  ],
+  "verdict": "legit"
+ }
+}

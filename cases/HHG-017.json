@@ -1,0 +1,236 @@
+{
+ "case_id": "case_17",
+ "verdict": "fraud",
+ "fraud_pattern": "synthetic_identity",
+ "confidence": 0.95,
+ "risk_score": 100.0,
+ "evidence_ids": [
+  "1049",
+  "1050",
+  "1051",
+  "EMAIL:synth00@freshmail.net",
+  "EMAIL:synth01@freshmail.net",
+  "EMAIL:synth02@freshmail.net",
+  "1053",
+  "1057",
+  "CARD:855500",
+  "CARD:855501",
+  "CARD:855502",
+  "1054",
+  "1058",
+  "CARD:855503",
+  "1055",
+  "1059",
+  "DEVICE:low-end-0",
+  "DEVICE:low-end-1",
+  "DEVICE:low-end-2",
+  "TXN:1049"
+ ],
+ "transactions_reviewed": [
+  1049,
+  1050,
+  1051
+ ],
+ "entities_flagged": {
+  "cards": [
+   "855500"
+  ],
+  "devices": [
+   "low-end-0",
+   "low-end-1",
+   "low-end-2"
+  ],
+  "emails": [
+   "synth00@freshmail.net",
+   "synth01@freshmail.net",
+   "synth02@freshmail.net"
+  ],
+  "accounts": [
+   "acct-855500"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "3 txns share card 855500 in window",
+   "node_count": 3
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 3 txns: device_change=True",
+   "node_count": 3
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=27",
+   "node_count": 3
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 855500 fans out to 3 recipients",
+   "node_count": 6
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "3 cards via device low-end-0",
+   "node_count": 6
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "3 cards via device low-end-1",
+   "node_count": 6
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "3 cards via device low-end-2",
+   "node_count": 6
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "16 nodes within 2 hops of 3 txns",
+   "node_count": 16
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c0",
+   "score": 0.6499
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c1",
+   "score": 0.4235
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "device_spoofing_cluster-c1",
+   "score": 0.3343
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "freeze_card",
+   "target": "855500",
+   "status": "ok",
+   "policy_ref": "freeze-fraud-confident",
+   "ref": "FRE-BC3CBA0C"
+  },
+  {
+   "action": "block_device",
+   "target": "low-end-0",
+   "status": "blocked:escalate",
+   "policy_ref": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "target": "synth00@freshmail.net",
+   "status": "ok",
+   "policy_ref": "flag-email-fraud",
+   "ref": "FLA-EECB83A0"
+  },
+  {
+   "action": "escalate_case",
+   "target": "case_17",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-A0117ABF"
+  },
+  {
+   "action": "notify_user",
+   "target": "synth00@freshmail.net",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-1DB19044"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "freeze_card",
+   "decision": "allow",
+   "rule": "freeze-fraud-confident"
+  },
+  {
+   "action": "block_device",
+   "decision": "escalate",
+   "rule": "block-device-review"
+  },
+  {
+   "action": "flag_email",
+   "decision": "allow",
+   "rule": "flag-email-fraud"
+  },
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 2941.12,
+  "max": 1166.16,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 300000,
+   "event": "TXN 1049 amt=1166.16 card=855500"
+  },
+  {
+   "dt": 300600,
+   "event": "TXN 1050 amt=851.47 card=855500"
+  },
+  {
+   "dt": 301200,
+   "event": "TXN 1051 amt=923.49 card=855500"
+  }
+ ],
+ "explanation": "Case case_17 (synthetic_identity): verdict=fraud with confidence 0.95 and risk score 100.0 over 3 transactions. Key signals: rapid_velocity_1h, device_change, thin_file, amount_spike. Pattern knowledge: synthetic_identity-c0, synthetic_identity-c1, device_spoofing_cluster-c1. Evidence: 1049, 1050, 1051, EMAIL:synth00@freshmail.net, EMAIL:synth01@freshmail.net, EMAIL:synth02@freshmail.net, 1053, 1057.",
+ "recommended_next_steps": [
+  "confirm card freeze with cardholder",
+  "analyst review of evidence_ids",
+  "consider SAR filing / collect chargeback evidence pack"
+ ],
+ "trigger": "Synthetic thin file plus high velocity",
+ "fraud_type": "synthetic_identity",
+ "uncertainty": 0.05,
+ "missing_evidence": [
+  "issuer_chargeback_pack"
+ ],
+ "next_best_action_before_extra_evidence": "block_transaction",
+ "extra_evidence_requested": [
+  "issuer_chargeback_pack"
+ ],
+ "next_best_action_after_extra_evidence": "block_transaction",
+ "recommended_actions": [
+  "freeze_card",
+  "block_device",
+  "flag_email",
+  "escalate_case",
+  "notify_user"
+ ],
+ "approval_route": "analyst_review",
+ "sar_required": true,
+ "sar": {
+  "required": true,
+  "filing_type": "FinCEN SAR (mock)",
+  "subject": "synth00@freshmail.net",
+  "amount_total_usd": 2941.12,
+  "transaction_count": 3,
+  "approval_route": "compliance",
+  "narrative": "The filing institution identified 3 transaction(s) totaling $2941.12 USD associated with synth00@freshmail.net, consistent with synthetic_identity. Automated graph analysis of instruments 855500 and devices low-end-0, low-end-1 revealed rapid_velocity_1h/device_change/thin_file/amount_spike (risk score 100.0, confidence 0.95). Evidence cited: . No legitimate business explanation was identified; activity is reported as suspicious under applicable BSA/FinCEN requirements."
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_17",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
+}

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +18,30 @@ OUTPUT_SCHEMA: list[str] = list(REQUIRED_OUTPUT_FIELDS)
 ROOT = Path(__file__).resolve().parents[2]
 CASES_IN = ROOT / "cases" / "inputs"
 CASES_OUT = ROOT / "cases" / "outputs"
+CASES_ROOT = ROOT / "cases"
 # Backward-compat aliases.
 INPUTS = CASES_IN
 OUTPUTS = CASES_OUT
+
+_HHG_RE = re.compile(r"(\d+)")
+
+
+def hhg_id(case_id: str) -> str:
+    """Map internal case_NN ids to submission naming: case_01 -> HHG-001."""
+    digits = _HHG_RE.findall(str(case_id))
+    if not digits:
+        raise ValueError(f"cannot derive HHG id from case_id: {case_id}")
+    return f"HHG-{int(digits[-1]):03d}"
+
+
+def write_hhg_files(case_id: str, enriched: dict[str, Any]) -> list[Path]:
+    """Write the submission answer file at cases/HHG-0NN.json (repo root,
+    per the submission form contract)."""
+    hhg = hhg_id(case_id)
+    payload = json.dumps(enriched, indent=1)
+    dest = CASES_ROOT / f"{hhg}.json"
+    dest.write_text(payload, encoding="utf-8")
+    return [dest]
 
 
 def _fnum(value: Any, default: float = 0.0) -> float:
@@ -135,6 +157,17 @@ def run_case(case_id: str) -> dict[str, Any]:
     CASES_OUT.mkdir(parents=True, exist_ok=True)
     (CASES_OUT / f"{case_id}.json").write_text(json.dumps(output, indent=1), encoding="utf-8")
     write_markdown_summary(output, CASES_OUT / f"{case_id}.md")
+
+    # Submission answer file: enriched union record (16-field core + NBA
+    # before/after, SAR narrative, extra-evidence loop, memory, write-back).
+    enriched = enrich_output(case, output)
+    for field in ("next_best_action_before_extra_evidence",
+                  "next_best_action_after_extra_evidence",
+                  "missing_evidence", "extra_evidence_requested",
+                  "uncertainty", "sar", "sar_required", "graph_writeback"):
+        if state.get(field):
+            enriched[field] = state.get(field)
+    write_hhg_files(case_id, enriched)
     return output
 
 
@@ -142,6 +175,8 @@ def run_all() -> list[dict[str, Any]]:
     outputs = []
     for path in sorted(CASES_IN.glob("case_*.json")):
         outputs.append(run_case(path.stem))
+    hhg = sorted(CASES_ROOT.glob("HHG-*.json"))
+    print(f"submission files: {len(hhg)} HHG-*.json in cases/")
     return outputs
 
 

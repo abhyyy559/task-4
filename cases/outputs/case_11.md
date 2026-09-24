@@ -1,7 +1,7 @@
 # case_11 — ESCALATE
 
 - pattern: None
-- risk_score: 35.0 (confidence 0.54)
+- risk_score: 35.0 (confidence 0.59)
 - transactions_reviewed: [1064]
 - evidence_ids: ['1064', 'EMAIL:emp.101@acmecorp.com', 'CARD:633334', 'DEVICE:acme-managed-01', 'EMAIL:payroll@acmecorp.com', 'TXN:1064']
 
@@ -12,6 +12,7 @@
 - q_mule_fanout: hub card 633334 fans out to 1 recipients (nodes=2)
 - q_device_cluster: 1 cards via device acme-managed-01 (nodes=2)
 - q_evidence_subgraph: 5 nodes within 2 hops of 1 txns (nodes=5)
+- q_evidence_subgraph: extra-evidence[cardholder_confirmation]: 5 nodes within 3 hops of 1 txns (nodes=5)
 
 ## RAG citations
 - patterns.md#money_mule_fanout-c0 (score=0.5471)
@@ -23,7 +24,7 @@
 - notify_user -> payroll@acmecorp.com [ok] via notify-always
 
 ## Explanation
-Case case_11 (money_mule_fanout): verdict=escalate with confidence 0.54 and risk score 35.0 over 1 transactions. Key signals: amount_spike. Pattern knowledge: money_mule_fanout-c0, money_mule_fanout-c1, synthetic_identity-c1. Evidence: 1064, EMAIL:emp.101@acmecorp.com, CARD:633334, DEVICE:acme-managed-01, EMAIL:payroll@acmecorp.com, TXN:1064.
+Case case_11 (money_mule_fanout): verdict=escalate with confidence 0.59 and risk score 35.0 over 1 transactions. Key signals: amount_spike. Pattern knowledge: money_mule_fanout-c0, money_mule_fanout-c1, synthetic_identity-c1. Evidence: 1064, EMAIL:emp.101@acmecorp.com, CARD:633334, DEVICE:acme-managed-01, EMAIL:payroll@acmecorp.com, TXN:1064.
 
 ## Recommended next steps
 - manual review of evidence_ids

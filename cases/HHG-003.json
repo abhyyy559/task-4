@@ -1,0 +1,183 @@
+{
+ "case_id": "case_03",
+ "verdict": "escalate",
+ "fraud_pattern": null,
+ "confidence": 0.664,
+ "risk_score": 66.0,
+ "evidence_ids": [
+  "1009",
+  "1010",
+  "1001",
+  "1002",
+  "1003",
+  "1004",
+  "1005",
+  "1006",
+  "1007",
+  "1008",
+  "1011",
+  "1012",
+  "CARD:411111",
+  "DEVICE:ring-dev-0",
+  "DEVICE:ring-dev-2",
+  "EMAIL:drop09@ringmail.cc",
+  "EMAIL:ring.buyer@ringmail.cc",
+  "TXN:1001",
+  "TXN:1002",
+  "TXN:1003"
+ ],
+ "transactions_reviewed": [
+  1009,
+  1010
+ ],
+ "entities_flagged": {
+  "cards": [
+   "411111"
+  ],
+  "devices": [
+   "ring-dev-0",
+   "ring-dev-2"
+  ],
+  "emails": [
+   "drop09@ringmail.cc",
+   "ring.buyer@ringmail.cc"
+  ],
+  "accounts": [
+   "acct-411111"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "12 txns share card 411111 in window",
+   "node_count": 12
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 12 txns: device_change=True",
+   "node_count": 12
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=False, mismatch_flags=72",
+   "node_count": 12
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 411111 fans out to 5 recipients",
+   "node_count": 17
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device ring-dev-0",
+   "node_count": 5
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device ring-dev-2",
+   "node_count": 5
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "17 nodes within 2 hops of 2 txns",
+   "node_count": 17
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "card_not_present_ring-c0",
+   "score": 0.5276
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "card_not_present_ring-c1",
+   "score": 0.4114
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.3896
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "escalate_case",
+   "target": "case_03",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-D511DE90"
+  },
+  {
+   "action": "notify_user",
+   "target": "ring.buyer@ringmail.cc",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-660DB58F"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 870.51,
+  "max": 444.15,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 101920,
+   "event": "TXN 1009 amt=444.15 card=411111"
+  },
+  {
+   "dt": 102160,
+   "event": "TXN 1010 amt=426.36 card=411111"
+  }
+ ],
+ "explanation": "Case case_03 (card_not_present_ring): verdict=escalate with confidence 0.664 and risk score 66.0 over 2 transactions. Key signals: device_change, new_device_age. Pattern knowledge: card_not_present_ring-c0, card_not_present_ring-c1, account_takeover-c0. Evidence: 1009, 1010, 1001, 1002, 1003, 1004, 1005, 1006.",
+ "recommended_next_steps": [
+  "manual review of evidence_ids",
+  "request step-up authentication from cardholder",
+  "re-run after 24h of additional transactions"
+ ],
+ "trigger": "Borderline shared card legit-looking amounts",
+ "fraud_type": null,
+ "uncertainty": 0.336,
+ "missing_evidence": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_before_extra_evidence": "escalate_to_analyst",
+ "extra_evidence_requested": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_after_extra_evidence": "escalate_to_analyst",
+ "recommended_actions": [
+  "escalate_case",
+  "notify_user"
+ ],
+ "approval_route": "analyst_review",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_03",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
+}

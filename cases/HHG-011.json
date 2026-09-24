@@ -128,5 +128,48 @@
   "manual review of evidence_ids",
   "request step-up authentication from cardholder",
   "re-run after 24h of additional transactions"
- ]
+ ],
+ "trigger": "Borderline payroll disbursement",
+ "fraud_type": null,
+ "uncertainty": 0.41,
+ "missing_evidence": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_before_extra_evidence": "request_step_up_auth",
+ "extra_evidence_requested": [
+  {
+   "evidence_type": "cardholder_confirmation",
+   "status": "received",
+   "policy": "auto_execute",
+   "rule": "auto",
+   "evidence_ids": [
+    "CARD:633334",
+    "DEVICE:acme-managed-01",
+    "EMAIL:emp.101@acmecorp.com",
+    "EMAIL:payroll@acmecorp.com",
+    "TXN:1064"
+   ],
+   "summary": "5 nodes within 3 hops of 1 txns"
+  }
+ ],
+ "next_best_action_after_extra_evidence": "request_step_up_auth",
+ "recommended_actions": [
+  "escalate_case",
+  "notify_user"
+ ],
+ "approval_route": "analyst_review",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_11",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
 }

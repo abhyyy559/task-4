@@ -1,0 +1,120 @@
+{
+ "case_id": "case_08",
+ "verdict": "legit",
+ "fraud_pattern": null,
+ "confidence": 0.75,
+ "risk_score": 0.0,
+ "evidence_ids": [
+  "1063",
+  "EMAIL:upgrade.d@gmail.com",
+  "CARD:522223",
+  "DEVICE:pixel-8-new",
+  "TXN:1063"
+ ],
+ "transactions_reviewed": [
+  1063
+ ],
+ "entities_flagged": {
+  "cards": [
+   "522223"
+  ],
+  "devices": [
+   "pixel-8-new"
+  ],
+  "emails": [
+   "upgrade.d@gmail.com"
+  ],
+  "accounts": [
+   "acct-522223"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "1 txns share card 522223 in window",
+   "node_count": 1
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 1 txns: device_change=False",
+   "node_count": 1
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=0",
+   "node_count": 1
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 522223 fans out to 1 recipients",
+   "node_count": 2
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "1 cards via device pixel-8-new",
+   "node_count": 2
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "4 nodes within 2 hops of 1 txns",
+   "node_count": 4
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c0",
+   "score": 0.6784
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "money_mule_fanout-c0",
+   "score": 0.4218
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "account_takeover-c1",
+   "score": 0.3989
+  }
+ ],
+ "actions_taken": [],
+ "policy_decisions": [],
+ "amounts": {
+  "total": 89.99,
+  "max": 89.99,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 227225,
+   "event": "TXN 1063 amt=89.99 card=522223"
+  }
+ ],
+ "explanation": "Case case_08 (account_takeover): verdict=legit with confidence 0.75 and risk score 0.0 over 1 transactions. Key signals: none strong. Pattern knowledge: account_takeover-c0, money_mule_fanout-c0, account_takeover-c1. Evidence: 1063, EMAIL:upgrade.d@gmail.com, CARD:522223, DEVICE:pixel-8-new, TXN:1063.",
+ "recommended_next_steps": [
+  "no action required",
+  "continue monitoring baseline"
+ ],
+ "trigger": "Negative control user upgraded phone",
+ "fraud_type": null,
+ "uncertainty": 0.25,
+ "missing_evidence": [],
+ "next_best_action_before_extra_evidence": "allow_transaction",
+ "extra_evidence_requested": [],
+ "next_best_action_after_extra_evidence": "allow_transaction",
+ "recommended_actions": [],
+ "approval_route": "auto",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_08",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
+}

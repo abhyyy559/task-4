@@ -1,0 +1,183 @@
+{
+ "case_id": "case_19",
+ "verdict": "escalate",
+ "fraud_pattern": null,
+ "confidence": 0.648,
+ "risk_score": 62.0,
+ "evidence_ids": [
+  "1056",
+  "1057",
+  "1055",
+  "EMAIL:synth06@freshmail.net",
+  "EMAIL:synth07@freshmail.net",
+  "EMAIL:synth08@freshmail.net",
+  "1049",
+  "1053",
+  "CARD:855500",
+  "CARD:855501",
+  "CARD:855502",
+  "1052",
+  "1060",
+  "CARD:855503",
+  "DEVICE:low-end-0",
+  "DEVICE:low-end-3",
+  "TXN:1049",
+  "TXN:1052",
+  "TXN:1053",
+  "TXN:1055"
+ ],
+ "transactions_reviewed": [
+  1056,
+  1057
+ ],
+ "entities_flagged": {
+  "cards": [
+   "855502"
+  ],
+  "devices": [
+   "low-end-0",
+   "low-end-3"
+  ],
+  "emails": [
+   "synth07@freshmail.net",
+   "synth08@freshmail.net"
+  ],
+  "accounts": [
+   "acct-855502"
+  ]
+ },
+ "graph_findings": [
+  {
+   "query": "q_card_ring",
+   "summary": "3 txns share card 855502 in window",
+   "node_count": 3
+  },
+  {
+   "query": "q_takeover_anomaly",
+   "summary": "takeover scan over 3 txns: device_change=True",
+   "node_count": 3
+  },
+  {
+   "query": "q_synthetic_identity",
+   "summary": "synthetic scan: thin_file=True, mismatch_flags=27",
+   "node_count": 3
+  },
+  {
+   "query": "q_mule_fanout",
+   "summary": "hub card 855502 fans out to 3 recipients",
+   "node_count": 6
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "3 cards via device low-end-0",
+   "node_count": 6
+  },
+  {
+   "query": "q_device_cluster",
+   "summary": "3 cards via device low-end-3",
+   "node_count": 6
+  },
+  {
+   "query": "q_evidence_subgraph",
+   "summary": "12 nodes within 2 hops of 2 txns",
+   "node_count": 12
+  }
+ ],
+ "rag_citations": [
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c0",
+   "score": 0.6499
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "synthetic_identity-c1",
+   "score": 0.4235
+  },
+  {
+   "doc": "patterns.md",
+   "chunk_id": "device_spoofing_cluster-c1",
+   "score": 0.3343
+  }
+ ],
+ "actions_taken": [
+  {
+   "action": "escalate_case",
+   "target": "case_19",
+   "status": "ok",
+   "policy_ref": "escalate-nonlegit",
+   "ref": "ESC-8CDB84C2"
+  },
+  {
+   "action": "notify_user",
+   "target": "synth07@freshmail.net",
+   "status": "ok",
+   "policy_ref": "notify-always",
+   "ref": "NOT-1F45FFD5"
+  }
+ ],
+ "policy_decisions": [
+  {
+   "action": "escalate_case",
+   "decision": "allow",
+   "rule": "escalate-nonlegit"
+  },
+  {
+   "action": "notify_user",
+   "decision": "allow",
+   "rule": "notify-always"
+  }
+ ],
+ "amounts": {
+  "total": 2060.72,
+  "max": 1102.5,
+  "currency": "USD"
+ },
+ "timeline": [
+  {
+   "dt": 304200,
+   "event": "TXN 1056 amt=958.22 card=855502"
+  },
+  {
+   "dt": 304800,
+   "event": "TXN 1057 amt=1102.5 card=855502"
+  }
+ ],
+ "explanation": "Case case_19 (synthetic_identity): verdict=escalate with confidence 0.648 and risk score 62.0 over 2 transactions. Key signals: device_change, thin_file, amount_spike. Pattern knowledge: synthetic_identity-c0, synthetic_identity-c1, device_spoofing_cluster-c1. Evidence: 1056, 1057, 1055, EMAIL:synth06@freshmail.net, EMAIL:synth07@freshmail.net, EMAIL:synth08@freshmail.net, 1049, 1053.",
+ "recommended_next_steps": [
+  "manual review of evidence_ids",
+  "request step-up authentication from cardholder",
+  "re-run after 24h of additional transactions"
+ ],
+ "trigger": "Borderline new immigrant thin file",
+ "fraud_type": null,
+ "uncertainty": 0.352,
+ "missing_evidence": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_before_extra_evidence": "escalate_to_analyst",
+ "extra_evidence_requested": [
+  "cardholder_confirmation",
+  "device_history"
+ ],
+ "next_best_action_after_extra_evidence": "escalate_to_analyst",
+ "recommended_actions": [
+  "escalate_case",
+  "notify_user"
+ ],
+ "approval_route": "analyst_review",
+ "sar_required": false,
+ "sar": {
+  "required": false,
+  "amount_threshold": 500
+ },
+ "memory_matches": [],
+ "status": "complete",
+ "graph_writeback": {
+  "status": "written",
+  "case_id": "case_19",
+  "vertex": "CASE",
+  "graph": "fraud_graph"
+ }
+}

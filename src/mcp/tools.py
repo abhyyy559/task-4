@@ -83,9 +83,28 @@ def t_synthetic(args: dict[str, Any]) -> dict[str, Any]:
 def t_evidence_subgraph(args: dict[str, Any]) -> dict[str, Any]:
     try:
         return _ok("evidence_subgraph",
-                   get_client().q_evidence_subgraph(args["transaction_ids"]))
+                   get_client().q_evidence_subgraph(args["transaction_ids"],
+                                                    hops=int(args.get("hops", 2))))
     except KeyError as exc:
         return _err("evidence_subgraph", f"missing arg: {exc}")
+
+
+def t_write_case(args: dict[str, Any]) -> dict[str, Any]:
+    """FR-12: persist a completed investigation as a CASE vertex."""
+    try:
+        return _ok("write_case", get_client().upsert_case(args))
+    except (ValueError, RuntimeError) as exc:
+        return _err("write_case", str(exc))
+
+
+def t_get_case(args: dict[str, Any]) -> dict[str, Any]:
+    """Read one persisted CASE vertex (write-back verification)."""
+    try:
+        return _ok("get_case", get_client().get_case(args["case_id"]))
+    except KeyError as exc:
+        return _err("get_case", f"missing arg: {exc}")
+    except (ValueError, RuntimeError) as exc:
+        return _err("get_case", str(exc))
 
 
 def t_fraud_knowledge(args: dict[str, Any]) -> dict[str, Any]:
@@ -104,6 +123,8 @@ TOOLS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "takeover": t_takeover,
     "synthetic": t_synthetic,
     "evidence_subgraph": t_evidence_subgraph,
+    "write_case": t_write_case,
+    "get_case": t_get_case,
     "fraud_knowledge": t_fraud_knowledge,
 }
 
@@ -114,7 +135,9 @@ TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     "mule_fanout": {"args": {"hub_card": "uint"}},
     "takeover": {"args": {"card1": "uint"}},
     "synthetic": {"args": {"card1": "uint"}},
-    "evidence_subgraph": {"args": {"transaction_ids": "int[]"}},
+    "evidence_subgraph": {"args": {"transaction_ids": "int[]", "hops": "int?"}},
+    "write_case": {"args": {"case_id": "string", "verdict": "string", "...": "case record"}},
+    "get_case": {"args": {"case_id": "string"}},
     "fraud_knowledge": {"args": {"query": "string", "k": "int?"}},
 }
 
