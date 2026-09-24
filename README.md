@@ -43,5 +43,13 @@ streamlit run src/ui/app.py   # investigation UI (needs streamlit)
 
 ## Outputs
 - `cases/inputs/case_NN.json` — 20 benchmark cases (5 patterns × 4).
-- `cases/outputs/case_NN.json` — investigation results, exact 16-field schema
-  (see `PLAN.md` §4; `OUTPUT_SCHEMA` in `src/agent/runner.py`).
+- `cases/HHG-001.json … HHG-020.json` — **submission answer files** (repo-root
+  contract). Each carries the full investigation record: 16-field core +
+  `next_best_action_before_extra_evidence` / `next_best_action_after_extra_evidence`,
+  uncertainty + extra-evidence loop, SAR narrative when policy requires
+  (fraud + amount ≥ $500, compliance approval route), memory matches, and the
+  graph write-back receipt (`CASE` vertex persisted per FR-12).
+- `cases/outputs/case_NN.json` + `.md` — per-case investigation results,
+  exact 16-field schema (see `PLAN.md` §4; `OUTPUT_SCHEMA` in `src/agent/runner.py`).
+- `data/graph_cases.json` — mock CASE vertex store (write-back verification via
+  `get_case`; swap to live TigerGraph upserts by setting `TIGERGRAPH_HOST`).

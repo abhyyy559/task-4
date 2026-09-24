@@ -32,8 +32,10 @@ python -m src.main --case case_04   # escalate: family card, thin-file ambiguity
 python -m src.agent.runner --all
 ```
 
-Writes `cases/outputs/case_01.json … case_20.json`, prints per-case verdicts plus
-`benchmark accuracy: 20/20`. Every output validates against the 16-field schema with zero violations.
+Writes `cases/outputs/case_01.json … case_20.json` **plus the submission answer files**
+`cases/HHG-001.json … cases/HHG-020.json` (repo-root contract), prints per-case verdicts plus
+`benchmark accuracy: 20/20`. HHG files carry the enriched record: NBA before/after extra
+evidence, SAR narrative (10 fraud cases over $500), uncertainty-loop log, graph write-back receipt.
 
 ## 4. Knowledge rebuild
 
@@ -53,6 +55,10 @@ graph findings, RAG citations, actions/policy tables, timeline.
 
 ## Talking points
 
+- Evidence loop: confidence < 0.60 triggers controlled extra-evidence requests (max 3 rounds); NBA is recorded before AND after — the 25% "next best action" criterion.
+- Temporal safety: similar-case memory only retrieves closed cases that predate the current one.
+- Graph write-back: every completed case persists as a CASE vertex (`data/graph_cases.json` mock / live upsert when TigerGraph is configured); verify with `get_case`.
+- SAR: policy-gated (compliance approval) with a FinCEN-style narrative, fraud + amount ≥ $500.
 - Offline-first: TigerGraph/LangGraph/Streamlit all optional with fallbacks.
 - No label leakage by construction (isFraud stripped at the client).
 - Policy sandbox: try `freeze_card` on a legit case — recorded as blocked, never executed.
