@@ -10,10 +10,18 @@ dashboard falls back to reading ``cases/outputs/*.json``.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
+# `streamlit run src/ui/app.py` adds the script's folder (src/ui) to sys.path
+# but NOT the project root, so lazy `from src.agent...` imports inside the
+# live-run path fail with "No module named 'src'". Insert ROOT explicitly;
+# idempotent, works regardless of where streamlit is launched from.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 INPUTS = ROOT / "cases" / "inputs"
 OUTPUTS = ROOT / "cases" / "outputs"
 
