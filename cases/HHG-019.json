@@ -1,0 +1,176 @@
+{
+ "case_id": "HHG-019",
+ "case": {
+  "status": "closed_legitimate",
+  "verdict": "legitimate",
+  "fraud_probability": 0.1,
+  "pattern": "none",
+  "pattern_description": "",
+  "affected_txn_ids": [],
+  "first_suspicious_txn_id": "",
+  "connected_card_ids": [
+   "C01104-K2",
+   "C01983-K1",
+   "C06224-K2",
+   "C11309-K1"
+  ],
+  "connected_device_profiles": [
+   "Windows | other | chrome 61.0 | 1280x720"
+  ],
+  "exposure_usd": 0.0,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3503878: channel=online, amount=$99.92, billing region 264.0, device marked 'New'",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3503878",
+     "C07987-K2"
+    ]
+   },
+   {
+    "claim": "Card C07987-K2 baseline (60d before flag): 80 transactions, median amount $117.03, max $1586.94, usual channels {'in_person': 70, 'online': 10}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C07987-K2"
+    ]
+   },
+   {
+    "claim": "Bank model scored transaction 3503878 at 0.9: an input signal, not a verdict (the model is often wrong in both directions)",
+    "source": "external",
+    "ref": "model:risk_score",
+    "entity_ids": [
+     "3503878"
+    ]
+   },
+   {
+    "claim": "Device profile 'Windows | other | chrome 61.0 | 1280x720' is shared by 5 cards: C07987-K2 plus C01104-K2, C01983-K1, C06224-K2, C11309-K1",
+    "source": "graph",
+    "ref": "q_device_sharing",
+    "entity_ids": [
+     "C07987-K2",
+     "C01104-K2",
+     "C01983-K1",
+     "C06224-K2",
+     "C11309-K1"
+    ]
+   },
+   {
+    "claim": "Account-takeover signature on card C07987-K2: channel mix ['in_person', 'online'] in 48h; device changed",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3499109",
+     "3503878"
+    ]
+   },
+   {
+    "claim": "Recurring-pattern match (R7): 15 prior charges within 3% of $99.92, ~monthly cadence",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3503878",
+     "C07987-K2"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2011 (confirmed_fraud, pattern=out_of_region_use): Case CC-2011: cardholder C07987 reported unrecognized activity on card C07987-K2. 5 transaction(s) between 2016-08-10 and 2016-08-11 totaling $3,059.89 were con",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2011"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2087 (cleared, pattern=none): Case CC-2087: model scored a $150.00 transaction at 0.94. Cardholder confirmed travel to the billing region in question. Alert cleared.",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2087"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2860 (confirmed_fraud, pattern=card_not_present_fraud): Case CC-2860: cardholder C07987 reported unrecognized activity on card C07987-K2. 1 transaction(s) between 2016-08-31 and 2016-08-31 totaling $149.92 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2860"
+    ]
+   },
+   {
+    "claim": "Prior case CC-5026 (confirmed_fraud, pattern=out_of_region_use): Case CC-5026: cardholder C07987 reported unrecognized activity on card C07987-K2. 3 transaction(s) between 2016-10-18 and 2016-10-18 totaling $309.86 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-5026"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0008 (confirmed_fraud, pattern=account_takeover): Case CC-0008: cardholder C03667 reported unrecognized activity on card C03667-K1. 1 transaction(s) between 2016-07-02 and 2016-07-02 totaling $49.04 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0008"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-2011",
+   "CC-2087",
+   "CC-2860",
+   "CC-5026",
+   "CC-0008"
+  ],
+  "summary": "Case HHG-019: a risk-score alert on transaction 3503878 ($99.92, online) for card C07987-K2. The activity is consistent with legitimate use (fraud probability 0.10); no fraud episode identified. Similar prior cases consulted: CC-2011, CC-2087, CC-2860, CC-5026, CC-0008.",
+  "written_to_graph": false,
+  "graph_case_id": ""
+ },
+ "evidence_requests": [
+  {
+   "type": "customer_validation",
+   "asked_after_step": 9,
+   "assumed_response": "Customer confirms the transaction as their own (simulated reply consistent with the weak evidence)"
+  }
+ ],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "VERIFY_WITH_CUSTOMER",
+    "route": "auto",
+    "reason": "R1: case rests on a single signal and fraud probability is below 0.70 (0.29); verify before any block"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: evidence requested"
+   }
+  ],
+  "final": [
+   {
+    "action": "CLOSE_NO_FRAUD",
+    "route": "auto",
+    "reason": "R3: customer confirms the transaction; close as legitimate and note the confirmation"
+   }
+  ],
+  "what_changed": "the customer confirmed the transaction, so the R1 verification recommendation resolved to CLOSE_NO_FRAUD under R3"
+ },
+ "sar": {
+  "file": false,
+  "reason": "3a: fraud is neither confirmed nor strongly suspected (exposure $0.00 is within $1,000, no shared origin, pattern is none); no SAR filed",
+  "narrative": "",
+  "subjects": [],
+  "total_amount_usd": 0,
+  "activity_dates": []
+ },
+ "stop_reason": "Fraud probability 0.10 at or below 0.15, supported by 12 independent pieces of evidence",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 1.023
+}

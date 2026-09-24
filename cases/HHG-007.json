@@ -1,0 +1,166 @@
+{
+ "case_id": "HHG-007",
+ "case": {
+  "status": "escalated",
+  "verdict": "uncertain",
+  "fraud_probability": 0.4825,
+  "pattern": "none",
+  "pattern_description": "",
+  "affected_txn_ids": [],
+  "first_suspicious_txn_id": "",
+  "connected_card_ids": [],
+  "connected_device_profiles": [],
+  "exposure_usd": 0,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3514948: channel=in_person, amount=$111.92, billing region 264.0; no identity record (in-person style transaction)",
+    "source": "graph",
+    "ref": "q_flagged_transaction",
+    "entity_ids": [
+     "3514948",
+     "C09933-K2"
+    ]
+   },
+   {
+    "claim": "Card C09933-K2 baseline (60d before flag): 846 transactions, median amount $79.03, max $2529.78, usual channels {'in_person': 799, 'online': 47}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C09933-K2"
+    ]
+   },
+   {
+    "claim": "Bank model scored transaction 3514948 at 0.87: an input signal, not a verdict (the model is often wrong in both directions)",
+    "source": "external",
+    "ref": "model:risk_score",
+    "entity_ids": [
+     "3514948"
+    ]
+   },
+   {
+    "claim": "Region cluster: 2 foreign card(s) made card-present purchases in billing region 264.0 within a week of the flag with burst activity near the flag",
+    "source": "graph",
+    "ref": "q_region_cluster",
+    "entity_ids": [
+     "C12166-K2",
+     "C02320-K2"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0104 (confirmed_fraud, pattern=out_of_region_use): Case CC-0104: cardholder C09933 reported unrecognized activity on card C09933-K2. 1 transaction(s) between 2016-07-04 and 2016-07-04 totaling $92.02 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0104"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0657 (cleared, pattern=none): Case CC-0657: model scored a $1,769.94 transaction at 0.90. Cardholder confirmed the purchase. Amount unusual for this customer but consistent with their stated",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0657"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0765 (confirmed_fraud, pattern=out_of_region_use): Case CC-0765: cardholder C09933 reported unrecognized activity on card C09933-K2. 13 transaction(s) between 2016-07-12 and 2016-07-18 totaling $1,664.54 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0765"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1228 (confirmed_fraud, pattern=account_takeover): Case CC-1228: cardholder C09933 reported unrecognized activity on card C09933-K2. 10 transaction(s) between 2016-07-20 and 2016-07-25 totaling $1,112.65 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1228"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1524 (confirmed_fraud, pattern=account_takeover): Case CC-1524: cardholder C09933 reported unrecognized activity on card C09933-K2. 14 transaction(s) between 2016-07-28 and 2016-08-01 totaling $3,532.83 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1524"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Case HHG-007 written to the graph as CASE-HHG-007 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-007"
+    ]
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-0104",
+   "CC-0657",
+   "CC-0765",
+   "CC-1228",
+   "CC-1524"
+  ],
+  "summary": "Case HHG-007: a risk-score alert on transaction 3514948 ($111.92, in_person) for card C09933-K2. Evidence is inconclusive (fraud probability 0.48); escalated for human review. Similar prior cases consulted: CC-0104, CC-0657, CC-0765, CC-1228, CC-1524.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-007"
+ },
+ "evidence_requests": [
+  {
+   "type": "customer_validation",
+   "asked_after_step": 9,
+   "assumed_response": "No reply within 24 hours (simulated; policy R4 applies)"
+  }
+ ],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "VERIFY_WITH_CUSTOMER",
+    "route": "auto",
+    "reason": "R1: case rests on a single signal and fraud probability is below 0.70 (0.48); verify before any block"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: evidence requested"
+   }
+  ],
+  "final": [
+   {
+    "action": "MONITOR_CARD",
+    "route": "auto",
+    "reason": "R4: no reply within 24 hours; raise monitoring sensitivity"
+   },
+   {
+    "action": "DECLINE_TRANSACTION",
+    "route": "L1",
+    "reason": "R4: decline pending authorizations until the customer responds"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: evidence was requested"
+   }
+  ],
+  "what_changed": "no customer reply within 24 hours, so verification became MONITOR_CARD plus DECLINE_TRANSACTION under R4"
+ },
+ "sar": {
+  "file": false,
+  "reason": "3a: fraud is neither confirmed nor strongly suspected (exposure $0.00 is within $1,000, shared origin present, pattern is none); no SAR filed",
+  "narrative": "",
+  "subjects": [],
+  "total_amount_usd": 0,
+  "activity_dates": []
+ },
+ "stop_reason": "Further steps (additional graph traversals) are unlikely to change the decision; stopping per policy section 6",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 1.03
+}

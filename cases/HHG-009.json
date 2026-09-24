@@ -1,0 +1,110 @@
+{
+ "case_id": "HHG-009",
+ "case": {
+  "status": "escalated",
+  "verdict": "uncertain",
+  "fraud_probability": 0.59,
+  "pattern": "none",
+  "pattern_description": "",
+  "affected_txn_ids": [],
+  "first_suspicious_txn_id": "",
+  "connected_card_ids": [],
+  "connected_device_profiles": [],
+  "exposure_usd": 0,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3581141: channel=online, amount=$30.02, billing region 203.0, device marked 'Found'",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3581141",
+     "C08299-K1"
+    ]
+   },
+   {
+    "claim": "Card C08299-K1 baseline (60d before flag): 10 transactions, median amount $49.92, max $99.98, usual channels {'online': 10}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C08299-K1"
+    ]
+   },
+   {
+    "claim": "Customer C08299 denies transaction 3581141: Customer C08299 message: 'I never made this $30.02 purchase. Please check my card.' Refers to 3581141.",
+    "source": "customer",
+    "ref": "customer:trigger:HHG-009",
+    "entity_ids": [
+     "3581141",
+     "C08299-K1",
+     "C08299"
+    ]
+   },
+   {
+    "claim": "Region cluster: 1 foreign card(s) made card-present purchases in billing region 203.0 within a week of the flag with burst activity near the flag",
+    "source": "graph",
+    "ref": "q_region_cluster",
+    "entity_ids": [
+     "C07867-K2"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Case HHG-009 written to the graph as CASE-HHG-009 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-009"
+    ]
+   }
+  ],
+  "similar_prior_cases": [],
+  "summary": "Case HHG-009: a customer denial on transaction 3581141 ($30.02, online) for card C08299-K1. Evidence is inconclusive (fraud probability 0.59); escalated for human review. No sufficiently similar prior cases found.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-009"
+ },
+ "evidence_requests": [],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C08299 denies transaction 3581141; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   }
+  ],
+  "final": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C08299 denies transaction 3581141; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   }
+  ],
+  "what_changed": "nothing"
+ },
+ "sar": {
+  "file": false,
+  "reason": "3a: fraud is neither confirmed nor strongly suspected (exposure $0.00 is within $1,000, shared origin present, pattern is none); no SAR filed",
+  "narrative": "",
+  "subjects": [],
+  "total_amount_usd": 0,
+  "activity_dates": []
+ },
+ "stop_reason": "Further steps (additional graph traversals) are unlikely to change the decision; stopping per policy section 6",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 1.025
+}

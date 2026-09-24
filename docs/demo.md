@@ -1,44 +1,46 @@
 # Demo walkthrough
 
-## 1. Setup (offline, ~1 min)
+## 1. Setup (offline, ~2 min)
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+source .venv/bin/activate
 pip install -e ".[test]"      # pytest, pyyaml, numpy
-python -m pytest tests/ -q    # expect: all pass
+python -m pytest tests/ -q    # expect: 42/42 pass
 ```
+
+Place the official 704 MB dataset at `data/HHGOA_IEEE_real/HHGOA_IEEE/`
+(see `TASK-PLAN-APPENDIX-README.md` for the Drive link).
 
 ## 2. Single investigation
 
 ```bash
-python -m src.main --case case_01
+python -m src.agent.runner --case HHG-011
 ```
 
-Shows the full 16-field JSON: verdict=fraud, pattern=card_not_present_ring,
-evidence_ids (TXNs + CARD:/DEVICE:/EMAIL: nodes), graph_findings per query,
-policy-gated actions (freeze_card allowed, block_device escalated to human).
-
-Contrast with a clean case:
+Shows the official nested answer: verdict=fraud, pattern=card_testing,
+evidence with cited transaction IDs, next-best actions with approval routes
+(auto/L1/L2), and the SAR decision. Contrast:
 
 ```bash
-python -m src.main --case case_08   # legit: phone upgrade, no actions taken
-python -m src.main --case case_04   # escalate: family card, thin-file ambiguity
+python -m src.agent.runner --case HHG-001   # legitimate: closed, no actions
+python -m src.agent.runner --case HHG-002   # uncertain: escalated to analyst
 ```
 
-## 3. Full benchmark (20 cases)
+## 3. Full benchmark (20 cases, ~100 s)
 
 ```bash
 python -m src.agent.runner --all
 ```
 
-Writes `cases/outputs/case_01.json … case_20.json`, prints per-case verdicts plus
-`benchmark accuracy: 20/20`. Every output validates against the 16-field schema with zero violations.
+Writes `cases/HHG-001.json … HHG-020.json`. Every answer validates the
+official schema; the run prints per-case verdicts. Latest: 6 legitimate /
+10 uncertain / 4 fraud, 6 SARs filed.
 
 ## 4. Knowledge rebuild
 
 ```bash
-python -m src.graphrag.ingest_docs   # patterns.md (+docs/*.md) -> data/vector_store.json
+python -m src.graphrag.ingest_docs   # official patterns + policy + closed cases -> store
 ```
 
 ## 5. UI (needs streamlit)
@@ -48,12 +50,13 @@ pip install streamlit
 streamlit run src/ui/app.py
 ```
 
-Pick a case in the sidebar → Investigate → verdict metrics, explanation, evidence IDs,
-graph findings, RAG citations, actions/policy tables, timeline.
+Pick a case → "Load saved answer" (or "Run investigation" for a live run) →
+verdict, pattern description, evidence table, similar prior cases, SAR,
+next-best actions (initial vs final).
 
 ## Talking points
 
 - Offline-first: TigerGraph/LangGraph/Streamlit all optional with fallbacks.
-- No label leakage by construction (isFraud stripped at the client).
-- Policy sandbox: try `freeze_card` on a legit case — recorded as blocked, never executed.
-- Solid benchmark: 20/20 benchmark accuracy across 5 distinct fraud patterns and negative controls (see architecture.md).
+- No label leakage by construction (ground truth never read at investigation time).
+- Policy R1–R10 verbatim from the official README; uncertain cases escalate, never auto-block.
+- Genuine graph algorithm: `q_ring_components` (WCC label propagation) finds device-linked card rings.

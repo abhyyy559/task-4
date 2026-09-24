@@ -1,0 +1,135 @@
+{
+ "case_id": "HHG-001",
+ "case": {
+  "status": "closed_legitimate",
+  "verdict": "legitimate",
+  "fraud_probability": 0.1,
+  "pattern": "none",
+  "pattern_description": "",
+  "affected_txn_ids": [],
+  "first_suspicious_txn_id": "",
+  "connected_card_ids": [],
+  "connected_device_profiles": [],
+  "exposure_usd": 0.0,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3514030: channel=in_person, amount=$77.07, billing region 444.0; no identity record (in-person style transaction)",
+    "source": "graph",
+    "ref": "q_flagged_transaction",
+    "entity_ids": [
+     "3514030",
+     "C12382-K1"
+    ]
+   },
+   {
+    "claim": "Card C12382-K1 baseline (60d before flag): 115 transactions, median amount $76.94, max $845.01, usual channels {'in_person': 115}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C12382-K1"
+    ]
+   },
+   {
+    "claim": "Bank model scored transaction 3514030 at 0.61: an input signal, not a verdict (the model is often wrong in both directions)",
+    "source": "external",
+    "ref": "model:risk_score",
+    "entity_ids": [
+     "3514030"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1066 (confirmed_fraud, pattern=out_of_region_use): Case CC-1066: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-07-23 and 2016-07-23 totaling $170.98 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1066"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1673 (confirmed_fraud, pattern=card_not_present_new_device): Case CC-1673: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-08-04 and 2016-08-04 totaling $199.98 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1673"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2964 (confirmed_fraud, pattern=out_of_region_use): Case CC-2964: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-09-01 and 2016-09-01 totaling $171.08 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2964"
+    ]
+   },
+   {
+    "claim": "Prior case CC-3587 (confirmed_fraud, pattern=out_of_region_use): Case CC-3587: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-09-16 and 2016-09-16 totaling $49.09 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-3587"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-1066",
+   "CC-1673",
+   "CC-2964",
+   "CC-3587"
+  ],
+  "summary": "Case HHG-001: a risk-score alert on transaction 3514030 ($77.07, in_person) for card C12382-K1. The activity is consistent with legitimate use (fraud probability 0.10); no fraud episode identified. Similar prior cases consulted: CC-1066, CC-1673, CC-2964, CC-3587.",
+  "written_to_graph": false,
+  "graph_case_id": ""
+ },
+ "evidence_requests": [
+  {
+   "type": "customer_validation",
+   "asked_after_step": 9,
+   "assumed_response": "Customer confirms the transaction as their own (simulated reply consistent with the weak evidence)"
+  }
+ ],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "VERIFY_WITH_CUSTOMER",
+    "route": "auto",
+    "reason": "R1: case rests on a single signal and fraud probability is below 0.70 (0.26); verify before any block"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: evidence requested"
+   },
+   {
+    "action": "ESCALATE_TO_ANALYST",
+    "route": "auto",
+    "reason": "R8: verdict is uncertain and exposure exceeds $500 (or evidence conflicts); hand to a human analyst"
+   }
+  ],
+  "final": [
+   {
+    "action": "CLOSE_NO_FRAUD",
+    "route": "auto",
+    "reason": "R3: customer confirms the transaction; close as legitimate and note the confirmation"
+   }
+  ],
+  "what_changed": "the customer confirmed the transaction, so the R1 verification recommendation resolved to CLOSE_NO_FRAUD under R3"
+ },
+ "sar": {
+  "file": false,
+  "reason": "3a: fraud is neither confirmed nor strongly suspected (exposure $0.00 is within $1,000, no shared origin, pattern is none); no SAR filed",
+  "narrative": "",
+  "subjects": [],
+  "total_amount_usd": 0,
+  "activity_dates": []
+ },
+ "stop_reason": "Fraud probability 0.10 at or below 0.15, supported by 8 independent pieces of evidence",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 0.729
+}

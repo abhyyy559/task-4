@@ -2,10 +2,14 @@
 
 Run with: ``streamlit run src/ui/app.py``
 
+Renders the official answer format: case record, evidence, SAR, and
+next-best actions (initial vs final). Live runs use
+``src.agent.investigate`` over the HHGOA dataset; saved answers load from
+``cases/HHG-*.json``.
+
 Offline safety: ``streamlit`` and all ``src.agent`` imports happen lazily
 inside functions, so ``python -m py_compile src/ui/app.py`` passes without
-streamlit (or langgraph / TigerGraph) installed. With no live backend the
-dashboard falls back to reading ``cases/outputs/*.json``.
+streamlit installed.
 """
 from __future__ import annotations
 
@@ -15,14 +19,14 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUTS = ROOT / "cases" / "inputs"
-OUTPUTS = ROOT / "cases" / "outputs"
+CASES = ROOT / "cases"
 
 
 def list_cases() -> list[str]:
     """Return sorted case_ids available under cases/inputs/."""
     if not INPUTS.exists():
         return []
-    return sorted(p.stem for p in INPUTS.glob("case_*.json"))
+    return sorted(p.stem for p in INPUTS.glob("HHG-*.json"))
 
 
 def load_case_input(case_id: str) -> dict[str, Any]:
@@ -34,181 +38,153 @@ def load_case_input(case_id: str) -> dict[str, Any]:
 
 
 def load_saved_output(case_id: str) -> dict[str, Any]:
-    """Load one cases/outputs/{case_id}.json (raises FileNotFoundError)."""
-    path = OUTPUTS / f"{case_id}.json"
+    """Load one cases/{case_id}.json (raises FileNotFoundError)."""
+    path = CASES / f"{case_id}.json"
     if not path.exists():
-        raise FileNotFoundError(f"saved output missing: {path} (run benchmark first)")
+        raise FileNotFoundError(f"saved answer missing: {path} (run benchmark first)")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def run_live_investigation(case: dict[str, Any]) -> dict[str, Any]:
-    """Run a live investigation for a case dict.
-
-    Canonical path: ``src.agent.graph.investigate_case`` (LangGraph when
-    available, orchestrator fallback otherwise) + ``src.agent.runner``
-    ``to_output_json`` (full 16-field output). Older/alternate entry
-    points (``run_single_case`` / ``run_case``) are tried as fallbacks so
-    the UI keeps working across refactors. Never returns None; raises
-    ValueError with a structured message on failure.
-    """
-    errors: list[str] = []
+    """Run a live investigation for a case dict via the official pipeline."""
     try:
-        from src.agent.graph import investigate_case
-        from src.agent.runner import to_output_json
+        from src.agent.orchestrator import investigate_case
 
-        state = investigate_case(dict(case))
-        out = to_output_json(dict(case), state)
-        if isinstance(out, dict):
-            try:
-                from src.agent.memory import find_similar_cases
-
-                out["memory_matches"] = find_similar_cases(out)
-            except Exception:
-                pass
-            return out
-        raise ValueError("to_output_json returned non-dict output")
+        out = investigate_case(dict(case))
     except Exception as exc:
-        errors.append(f"investigate_case path: {exc}")
-    # -- fallbacks for alternate runner shapes --------------------------------
-    try:
-        from src.agent import runner as runner_mod
-
-        for attr in ("run_single_case", "run_case"):
-            fn = getattr(runner_mod, attr, None)
-            if fn is None:
-                continue
-            try:
-                try:
-                    out = fn(dict(case))
-                except TypeError:
-                    out = fn(str(case.get("case_id", "")))
-                if isinstance(out, dict):
-                    out.pop("_memory_matches", None)
-                    return out
-            except Exception as exc2:
-                errors.append(f"{attr}: {exc2}")
-    except Exception as exc3:
-        errors.append(f"runner fallback import: {exc3}")
-    raise ValueError(f"live investigation failed: {'; '.join(errors)}")
+        raise ValueError(f"live investigation failed: {exc}") from exc
+    if not isinstance(out, dict):
+        raise ValueError("investigation returned non-dict answer")
+    return out
 
 
 def _verdict_color(verdict: str) -> str:
-    return {"fraud": "red", "escalate": "orange", "legit": "green"}.get(
+    return {"fraud": "red", "uncertain": "orange", "legitimate": "green"}.get(
         str(verdict).lower(), "gray"
     )
 
 
-def _render_output(st: Any, output: dict[str, Any], case: dict[str, Any]) -> None:
-    """Render one investigation output with streamlit widgets."""
-    verdict = output.get("verdict", "escalate")
-    confidence = float(output.get("confidence", 0.0) or 0.0)
-    risk = float(output.get("risk_score", 0.0) or 0.0)
+def _nba_table(items: list[dict[str, Any]]) -> list[dict[str, str]]:
+    return [
+        {
+            "action": str(a.get("action", "")),
+            "route": str(a.get("route", "")),
+            "reason": str(a.get("reason", ""))[:160],
+        }
+        for a in items
+    ]
+
+
+def _render_output(st: Any, answer: dict[str, Any], case: dict[str, Any]) -> None:
+    """Render one official answer record with streamlit widgets."""
+    rec = answer.get("case", {})
+    verdict = rec.get("verdict", "uncertain")
+    status = rec.get("status", "open")
+    prob = float(rec.get("fraud_probability", 0.0) or 0.0)
+    pattern = rec.get("pattern", "none")
+    exposure = float(rec.get("exposure_usd", 0.0) or 0.0)
 
     st.subheader(f"Verdict: :{_verdict_color(verdict)}[{verdict}]")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Risk score", f"{risk:.1f}")
-    c2.metric("Confidence", f"{confidence:.3f}")
-    c3.metric("Fraud pattern", str(output.get("fraud_pattern") or case.get("pattern")))
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Fraud probability", f"{prob:.2f}")
+    c2.metric("Pattern", pattern)
+    c3.metric("Exposure (USD)", f"${exposure:,.2f}")
+    c4.metric("Status", status)
 
-    # -- trigger / details -------------------------------------------------
+    st.markdown("### Summary")
+    st.write(rec.get("summary", "No summary recorded."))
+    if rec.get("pattern_description"):
+        st.info(rec["pattern_description"])
+
     with st.expander("Trigger / case details", expanded=True):
-        st.write(f"**Case:** {output.get('case_id', case.get('case_id'))}")
-        st.write(f"**Trigger:** {output.get('trigger', case.get('description', 'n/a'))}")
-        st.write(f"**Expected label:** {case.get('label', 'n/a')}")
-        st.write(f"**Subject:** `{json.dumps(case.get('subject', {}))}`")
-        st.write(f"**Transaction IDs:** `{json.dumps(case.get('transaction_ids', []))}`")
-        st.write(f"**Signals:** `{json.dumps(case.get('signals', {}))}`")
+        st.write(f"**Case:** {answer.get('case_id', case.get('case_id'))}")
+        st.write(f"**Trigger type:** {case.get('trigger_type', 'n/a')}")
+        st.write(f"**Trigger:** {case.get('trigger_text', 'n/a')}")
+        st.write(f"**Flagged transaction:** `{case.get('flagged_txn_id')}`")
+        st.write(f"**Card:** `{case.get('card_id')}` / **Customer:** `{case.get('customer_id')}`")
+        if case.get("risk_score") is not None:
+            st.write(f"**Model risk score (input, not verdict):** {case.get('risk_score')}")
+        st.write(f"**Affected transactions:** `{json.dumps(rec.get('affected_txn_ids', []))}`")
+        st.write(f"**First suspicious:** `{rec.get('first_suspicious_txn_id') or 'n/a'}`")
+        st.write(f"**Connected cards:** `{json.dumps(rec.get('connected_card_ids', []))}`")
+        st.write(
+            "**Connected device profiles:** "
+            f"`{json.dumps(rec.get('connected_device_profiles', []))}`"
+        )
 
-    # -- explanation --------------------------------------------------------
-    st.markdown("### Explanation")
-    st.write(str(output.get("explanation", "No explanation recorded.")))
-
-    # -- uncertainty / missing evidence -------------------------------------
-    uncertainty = output.get("uncertainty", "n/a")
-    missing = output.get("missing_evidence", [])
-    with st.expander("Uncertainty / missing evidence"):
-        st.metric("Uncertainty", str(uncertainty))
-        if missing:
-            st.table([{"missing": m} for m in missing])
-        else:
-            st.write("No missing-evidence items recorded.")
-
-    # -- timeline ------------------------------------------------------------
-    with st.expander("Timeline"):
-        timeline = output.get("timeline", []) or []
-        if timeline:
+    with st.expander("Evidence", expanded=True):
+        evidence = rec.get("evidence", []) or []
+        if evidence:
             try:
-                st.dataframe(timeline)
+                st.dataframe(
+                    [
+                        {
+                            "claim": str(e.get("claim", ""))[:140],
+                            "source": e.get("source", ""),
+                            "ref": e.get("ref", ""),
+                            "entities": ", ".join(e.get("entity_ids", [])[:4]),
+                        }
+                        for e in evidence
+                    ]
+                )
             except Exception:
-                st.json(timeline)
+                st.json(evidence)
         else:
-            st.write("No timeline events.")
-        with st.expander("Raw transactions reviewed"):
-            st.json(output.get("transactions_reviewed", []))
+            st.write("No evidence recorded.")
 
-    # -- graph evidence -------------------------------------------------------
-    with st.expander("Graph evidence", expanded=True):
-        st.write(f"**Evidence IDs:** `{json.dumps(output.get('evidence_ids', []))}`")
-        findings = output.get("graph_findings", []) or []
-        if findings:
-            try:
-                rows = [
-                    {
-                        "query": f.get("query", ""),
-                        "summary": str(f.get("summary", ""))[:120],
-                        "nodes": f.get("node_count", 0),
-                    }
-                    for f in findings
-                ]
-                st.dataframe(rows)
-            except Exception:
-                st.json(findings)
-            with st.expander("Full graph findings JSON"):
-                st.json(findings)
+    with st.expander("Similar prior cases (case memory)"):
+        similar = rec.get("similar_prior_cases", []) or []
+        st.write(", ".join(similar) if similar else "None retrieved.")
+        st.caption(
+            f"Written to graph: {rec.get('written_to_graph')} "
+            f"({rec.get('graph_case_id') or 'n/a'})"
+        )
+
+    sar = answer.get("sar", {}) or {}
+    st.markdown("### SAR (Suspicious Activity Report)")
+    st.write(f"**File:** {bool(sar.get('file'))} — {sar.get('reason', '')}")
+    if sar.get("file"):
+        st.write(sar.get("narrative", ""))
+        st.write(f"**Subjects:** `{json.dumps(sar.get('subjects', []))}`")
+        st.write(f"**Total amount:** ${float(sar.get('total_amount_usd', 0) or 0):,.2f}")
+        st.write(f"**Activity dates:** `{json.dumps(sar.get('activity_dates', []))}`")
+
+    nba = answer.get("next_best_actions", {}) or {}
+    st.markdown("### Next best actions")
+    st.caption("**Initial** (before requested evidence)")
+    try:
+        st.table(_nba_table(nba.get("initial", []) or []))
+    except Exception:
+        st.json(nba.get("initial", []))
+    st.caption("**Final** (after assumed evidence responses)")
+    try:
+        st.table(_nba_table(nba.get("final", []) or []))
+    except Exception:
+        st.json(nba.get("final", []))
+    st.write(f"**What changed:** {nba.get('what_changed', 'nothing')}")
+
+    with st.expander("Evidence requests (simulated responses)"):
+        reqs = answer.get("evidence_requests", []) or []
+        if reqs:
+            st.json(reqs)
         else:
-            st.write("No graph findings.")
-        with st.expander("Entities flagged"):
-            st.json(output.get("entities_flagged", {}))
+            st.write("No extra evidence requested.")
 
-    # -- RAG citations ---------------------------------------------------------
-    with st.expander("RAG citations"):
-        cites = output.get("rag_citations", []) or []
-        if cites:
-            try:
-                st.table(cites)
-            except Exception:
-                st.json(cites)
-        else:
-            st.write("No citations.")
+    with st.expander("Run metadata"):
+        st.json(
+            {
+                "stop_reason": answer.get("stop_reason"),
+                "tool_calls": answer.get("tool_calls"),
+                "tokens": answer.get("tokens"),
+                "latency_s": answer.get("latency_s"),
+            }
+        )
 
-    # -- amounts ---------------------------------------------------------------
-    with st.expander("Amounts"):
-        st.json(output.get("amounts", {}))
-
-    # -- recommended actions + approval route -----------------------------------
-    st.markdown("### Recommended actions / approval route")
-    actions = (
-        output.get("recommended_actions")
-        or output.get("recommended_next_steps")
-        or []
-    )
-    if actions:
-        st.table([{"action": a} for a in actions])
-    else:
-        st.write("No recommended actions.")
-    st.write(f"**Approval route:** `{output.get('approval_route', 'analyst review')}`")
-    with st.expander("Actions taken"):
-        st.json(output.get("actions_taken", []))
-    with st.expander("Policy decisions"):
-        st.json(output.get("policy_decisions", []))
-
-    # -- propose an action (policy-gated via executor) -------------------------
     with st.expander("Propose an action (policy-gated via executor)"):
-        action = st.selectbox("action", ["freeze_card", "block_device", "flag_email",
-                                         "notify_user", "escalate_case", "refund_transaction"])
-        entities = output.get("entities_flagged", {}) or {}
-        default_target = str((entities.get("cards") or [""])[0])
-        target = st.text_input("target", value=default_target)
+        from src.agent.policy import KNOWN_ACTIONS
+
+        action = st.selectbox("action", list(KNOWN_ACTIONS))
+        target = st.text_input("target", value=str(case.get("card_id", "")))
         if st.button("Submit action"):
             if not target:
                 st.error("target must be non-empty")
@@ -216,36 +192,19 @@ def _render_output(st: Any, output: dict[str, Any], case: dict[str, Any]) -> Non
                 try:
                     from src.actions.executor import execute
 
-                    context = {"verdict": output.get("verdict", "escalate"),
-                               "confidence": output.get("confidence", 0.0),
-                               "fraud_pattern": output.get("fraud_pattern")}
-                    record, decision = execute(str(action), target, context)
+                    record, decision = execute(
+                        str(action), target, {"rule": "ui-proposal"}
+                    )
                     st.json({"record": record, "decision": decision})
+                    st.caption(
+                        "Only `auto`-route actions execute; L1/L2 are recorded "
+                        "as recommendations awaiting human approval."
+                    )
                 except Exception as exc:
                     st.error(f"action failed: {exc}")
 
-    # -- memory matches ----------------------------------------------------------
-    with st.expander("Memory matches"):
-        mem = output.get("memory_matches", output.get("_memory_matches", []))
-        if mem:
-            st.json(mem)
-        else:
-            st.write("No similar past cases.")
-
-    # -- SAR ----------------------------------------------------------------------
-    sar_required = output.get("sar_required", False)
-    sar = output.get("sar")
-    if sar_required or sar:
-        st.markdown("### SAR (Suspicious Activity Report)")
-        st.write(f"**SAR required:** {bool(sar_required)}")
-        if sar:
-            st.json(sar)
-    else:
-        st.caption("SAR: not required for this case.")
-
-    # -- raw -----------------------------------------------------------------------
-    with st.expander("Raw output JSON"):
-        st.json(output)
+    with st.expander("Raw answer JSON"):
+        st.json(answer)
 
 
 def main() -> None:
@@ -255,7 +214,7 @@ def main() -> None:
     except Exception as exc:
         raise RuntimeError(
             "streamlit is not installed; install it to run the UI "
-            "(`pip install streamlit`) — saved outputs remain readable as JSON."
+            "(`pip install streamlit`) — saved answers remain readable as JSON."
         ) from exc
 
     st.set_page_config(page_title="Fraud investigation dashboard", layout="wide")
@@ -275,7 +234,7 @@ def main() -> None:
 
     col_a, col_b = st.columns(2)
     run_clicked = col_a.button("Run investigation")
-    load_clicked = col_b.button("Load saved output")
+    load_clicked = col_b.button("Load saved answer")
 
     if run_clicked:
         with st.spinner(f"Investigating {case_id} ..."):
@@ -285,29 +244,27 @@ def main() -> None:
                 _render_output(st, output, case)
             except Exception as exc:
                 st.error(f"Live run failed: {exc}")
-                st.info("Falling back to saved output (if present).")
+                st.info("Falling back to saved answer (if present).")
                 try:
                     _render_output(st, load_saved_output(str(case_id)), case)
                 except Exception as exc2:
-                    st.error(f"No saved output either: {exc2}")
+                    st.error(f"No saved answer either: {exc2}")
     elif load_clicked:
         try:
             _render_output(st, load_saved_output(str(case_id)), case)
         except Exception as exc:
-            st.error(f"Cannot load saved output: {exc}")
+            st.error(f"Cannot load saved answer: {exc}")
     else:
-        # Default view: saved output if present, else case preview.
         try:
             _render_output(st, load_saved_output(str(case_id)), case)
         except Exception:
-            st.info("No saved output yet — press **Run investigation**.")
+            st.info("No saved answer yet — press **Run investigation**.")
             with st.expander("Case input preview", expanded=True):
                 st.json(case)
 
 
-# Back-compat alias: `streamlit run src/ui/app.py` works with either entry.
 def run_ui() -> None:
-    """Alias for :func:`main` (older in-progress draft used this name)."""
+    """Alias for :func:`main`."""
     main()
 
 

@@ -1,0 +1,11 @@
+# Official 704MB dataset — never commit (see TASK-PLAN-APPENDIX-README.md)
+data/HHGOA_IEEE_real/
+# Python
+__pycache__/
+*.pyc
+.venv/
+# Secrets
+.env
+# UI / OS
+.streamlit/
+.DS_Store

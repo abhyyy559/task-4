@@ -1,0 +1,201 @@
+{
+ "case_id": "HHG-011",
+ "case": {
+  "status": "closed_fraud",
+  "verdict": "fraud",
+  "fraud_probability": 0.99,
+  "pattern": "card_testing",
+  "pattern_description": "",
+  "affected_txn_ids": [
+   "3152170",
+   "3152171",
+   "3152184",
+   "3152187",
+   "3152198",
+   "3152231",
+   "3152296",
+   "3152607",
+   "3583368"
+  ],
+  "first_suspicious_txn_id": "3152170",
+  "connected_card_ids": [
+   "C03938-K1",
+   "C05595-K1",
+   "C05678-K1"
+  ],
+  "connected_device_profiles": [
+   "SM-G610F Build/NRD90M | chrome 66.0 for android"
+  ],
+  "exposure_usd": 208.56,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3583368: channel=online, amount=$131.30, billing region n/a, device marked 'New'",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3583368",
+     "C11923-K2"
+    ]
+   },
+   {
+    "claim": "Card C11923-K2 baseline (60d before flag): 2698 transactions, median amount $26.66, max $334.92, usual channels {'online': 2698}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C11923-K2"
+    ]
+   },
+   {
+    "claim": "Customer C11923 denies transaction 3583368: Customer C11923 message: 'I never made this $131.30 purchase. Please check my card.' Refers to 3583368.",
+    "source": "customer",
+    "ref": "customer:trigger:HHG-011",
+    "entity_ids": [
+     "3583368",
+     "C11923-K2",
+     "C11923"
+    ]
+   },
+   {
+    "claim": "Device profile 'SM-G610F Build/NRD90M | chrome 66.0 for android' is shared by 4 cards: C11923-K2 plus C03938-K1, C05595-K1, C05678-K1",
+    "source": "graph",
+    "ref": "q_device_sharing",
+    "entity_ids": [
+     "C11923-K2",
+     "C03938-K1",
+     "C05595-K1",
+     "C05678-K1"
+    ]
+   },
+   {
+    "claim": "Card-testing signature: 6 tiny online authorizations (<$5) within an hour followed by a larger purchase on card C11923-K2",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3152170",
+     "3152171",
+     "3152184",
+     "3152187",
+     "3152198",
+     "3152231",
+     "3152296",
+     "3152607"
+    ]
+   },
+   {
+    "claim": "Structuring signature: 4 online purchases within an hour, each just under $100 \u2014 structuring signature",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3578471",
+     "3578475",
+     "3578483",
+     "3578486"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0290 (confirmed_fraud, pattern=card_testing): Case CC-0290: cardholder C11923 reported unrecognized activity on card C11923-K2. 8 transaction(s) between 2016-07-05 and 2016-07-08 totaling $144.56 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0290"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2247 (confirmed_fraud, pattern=card_testing): Case CC-2247: cardholder C11923 reported unrecognized activity on card C11923-K2. 71 transaction(s) between 2016-07-25 and 2016-08-16 totaling $4,886.18 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2247"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2673 (confirmed_fraud, pattern=card_testing): Case CC-2673: cardholder C11923 reported unrecognized activity on card C11923-K2. 33 transaction(s) between 2016-08-18 and 2016-08-27 totaling $1,334.96 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2673"
+    ]
+   },
+   {
+    "claim": "Prior case CC-4501 (confirmed_fraud, pattern=card_testing): Case CC-4501: cardholder C11923 reported unrecognized activity on card C11923-K2. 28 transaction(s) between 2016-09-26 and 2016-10-06 totaling $1,508.58 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-4501"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0031 (confirmed_fraud, pattern=card_not_present_new_device): Case CC-0031: cardholder C11923 reported unrecognized activity on card C11923-K2. 1 transaction(s) between 2016-07-02 and 2016-07-02 totaling $20.36 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0031"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Case HHG-011 written to the graph as CASE-HHG-011 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-011"
+    ]
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-0290",
+   "CC-2247",
+   "CC-2673",
+   "CC-4501",
+   "CC-0031"
+  ],
+  "summary": "Case HHG-011: a customer denial on transaction 3583368 ($131.30, online) for card C11923-K2. Investigation found a card testing episode of 9 transaction(s) with exposure $208.56 (fraud probability 0.99). Similar prior cases consulted: CC-0290, CC-2247, CC-2673, CC-4501, CC-0031.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-011"
+ },
+ "evidence_requests": [],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C11923 denies transaction 3583368; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   }
+  ],
+  "final": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C11923 denies transaction 3583368; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   }
+  ],
+  "what_changed": "nothing"
+ },
+ "sar": {
+  "file": false,
+  "reason": "3a: fraud is neither confirmed nor strongly suspected (exposure $208.56 is within $1,000, no shared origin, pattern is card_testing); no SAR filed",
+  "narrative": "",
+  "subjects": [],
+  "total_amount_usd": 0,
+  "activity_dates": []
+ },
+ "stop_reason": "Fraud probability 0.99 at or above 0.85, supported by 12 independent pieces of evidence",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 46.992
+}

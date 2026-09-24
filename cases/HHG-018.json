@@ -1,0 +1,172 @@
+{
+ "case_id": "HHG-018",
+ "case": {
+  "status": "escalated",
+  "verdict": "uncertain",
+  "fraud_probability": 0.74,
+  "pattern": "none",
+  "pattern_description": "",
+  "affected_txn_ids": [],
+  "first_suspicious_txn_id": "",
+  "connected_card_ids": [],
+  "connected_device_profiles": [],
+  "exposure_usd": 0,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3491361: channel=in_person, amount=$39.08, billing region 126.0; no identity record (in-person style transaction)",
+    "source": "graph",
+    "ref": "q_flagged_transaction",
+    "entity_ids": [
+     "3491361",
+     "C02354-K2"
+    ]
+   },
+   {
+    "claim": "Card C02354-K2 baseline (60d before flag): 2308 transactions, median amount $88.75, max $4438.01, usual channels {'in_person': 2216, 'online': 92}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C02354-K2"
+    ]
+   },
+   {
+    "claim": "Customer C02354 denies transaction 3491361: Customer C02354 message: 'I never made this $39.08 purchase. Please check my card.' Refers to 3491361.",
+    "source": "customer",
+    "ref": "customer:trigger:HHG-018",
+    "entity_ids": [
+     "3491361",
+     "C02354-K2",
+     "C02354"
+    ]
+   },
+   {
+    "claim": "Region cluster: 1 foreign card(s) made card-present purchases in billing region 126.0 within a week of the flag with burst activity near the flag",
+    "source": "graph",
+    "ref": "q_region_cluster",
+    "entity_ids": [
+     "C07648-K2"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0255 (confirmed_fraud, pattern=account_takeover): Case CC-0255: cardholder C02354 reported unrecognized activity on card C02354-K2. 7 transaction(s) between 2016-07-06 and 2016-07-08 totaling $1,167.08 were con",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0255"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0405 (cleared, pattern=none): Case CC-0405: model scored a $22.30 transaction at 0.94. Cardholder confirmed travel to the billing region in question. Alert cleared.",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0405"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0454 (confirmed_fraud, pattern=account_takeover): Case CC-0454: cardholder C02354 reported unrecognized activity on card C02354-K2. 6 transaction(s) between 2016-07-12 and 2016-07-13 totaling $940.94 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0454"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0631 (confirmed_fraud, pattern=out_of_region_use): Case CC-0631: cardholder C02354 reported unrecognized activity on card C02354-K2. 2 transaction(s) between 2016-07-16 and 2016-07-16 totaling $118.17 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0631"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1450 (confirmed_fraud, pattern=account_takeover): Case CC-1450: cardholder C02354 reported unrecognized activity on card C02354-K2. 14 transaction(s) between 2016-07-21 and 2016-07-29 totaling $2,351.25 were co",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1450"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Case HHG-018 written to the graph as CASE-HHG-018 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-018"
+    ]
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-0255",
+   "CC-0405",
+   "CC-0454",
+   "CC-0631",
+   "CC-1450"
+  ],
+  "summary": "Case HHG-018: a customer denial on transaction 3491361 ($39.08, in_person) for card C02354-K2. Evidence is inconclusive (fraud probability 0.74); escalated for human review. Similar prior cases consulted: CC-0255, CC-0405, CC-0454, CC-0631, CC-1450.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-018"
+ },
+ "evidence_requests": [],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C02354 denies transaction 3491361; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "R2/3a: exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud"
+   }
+  ],
+  "final": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C02354 denies transaction 3491361; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "R2/3a: exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud"
+   }
+  ],
+  "what_changed": "nothing"
+ },
+ "sar": {
+  "file": true,
+  "reason": "3a: fraud is confirmed or strongly suspected and at least one SAR condition holds: shared device profile / region cluster / another card's fraud",
+  "narrative": "WHO: customer C02354, card C02354-K2. WHAT: 0 transaction(s) totaling $0.00 identified as a none episode. WHEN: between 2016-11-27 and 2016-11-27. WHERE: via in_person channels. HOW: The flagged transaction 3491361 ($39.08) triggered review; graph analysis of the card's history, device records, and cross-card device/region edges identified the episode. WHY SUSPICIOUS: The activity is inconsistent with the cardholder's history and matches the none pattern (assessed fraud probability 0.74 from 10 evidence items); innocent explanations were considered and rejected on the evidence.",
+  "subjects": [
+   "C02354",
+   "C02354-K2"
+  ],
+  "total_amount_usd": 0,
+  "activity_dates": [
+   "2016-11-27",
+   "2016-11-27"
+  ]
+ },
+ "stop_reason": "Further steps (additional graph traversals) are unlikely to change the decision; stopping per policy section 6",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 1.142
+}

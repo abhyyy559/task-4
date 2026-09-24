@@ -1,7 +1,8 @@
 -- =====================================================================
--- queries.gsql — 6 named FraudGraph queries (TigerGraph Savanna / GSQL)
+-- queries.gsql — 8 named FraudGraph queries (TigerGraph Savanna / GSQL)
 -- Part 1 (S2.1.2): q_card_ring, q_device_cluster, q_mule_fanout
 -- Part 2 (S2.1.3): q_takeover_anomaly, q_synthetic_identity, q_evidence_subgraph
+-- Part 3: q_get_transactions, q_ring_components (WCC label propagation)
 -- Every query returns evidence IDs (TransactionID txn_id values / node IDs).
 -- Graph: fraud_graph (see schema.gsql).
 -- =====================================================================
@@ -10,7 +11,7 @@ USE GRAPH fraud_graph
 -- Q1: q_card_ring — card-not-present ring expansion.
 -- Params: card_id (CARD.card_id), start_dt/end_dt (TRANSACTION.dt window).
 -- Returns: Ring (TRANSACTION vertices: evidence txn_ids), plus linked
---   Emails and Devices for pivot. Covers pattern A (card_not_present_ring).
+--   Emails and Devices for pivot. Covers card_not_present_fraud investigations (shared-card ring pivot).
 CREATE QUERY q_card_ring(STRING card_id, UINT start_dt, UINT end_dt) FOR GRAPH fraud_graph {
   Seed = {CARD.*};
   Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
@@ -24,7 +25,7 @@ CREATE QUERY q_card_ring(STRING card_id, UINT start_dt, UINT end_dt) FOR GRAPH f
 -- Q2: q_device_cluster — device-spoofing cluster expansion.
 -- Params: device (DEVICE.device fingerprint), min_cards (cluster threshold).
 -- Returns: Txns (TRANSACTION evidence IDs), Cards (CARD node IDs funnelled
---   through the device). Covers pattern D (device_spoofing_cluster).
+--   through the device). Supports card_not_present_new_device / undocumented investigations (device-cluster pivot).
 CREATE QUERY q_device_cluster(STRING device, UINT min_cards) FOR GRAPH fraud_graph {
   Seed = {DEVICE.*};
   Seed = SELECT s FROM Seed:s WHERE s.device == device;
@@ -35,15 +36,15 @@ CREATE QUERY q_device_cluster(STRING device, UINT min_cards) FOR GRAPH fraud_gra
 
 -- Q3: q_mule_fanout — money-mule fan-out from one hub card.
 -- Params: hub_card (CARD.card_id), start_dt/end_dt (TRANSACTION.dt window).
--- Returns: Out (TRANSACTION evidence IDs ordered by dt), Recipients (EMAIL
---   node IDs). Callers flag round-amount dispersal (identical integer amounts).
---   Covers pattern C (money_mule_fanout).
+-- Returns: Out (TRANSACTION evidence IDs), Recipients (EMAIL node IDs).
+-- NOTE: GSQL forbids ORDER BY on a vertex set that feeds a further SELECT,
+-- so Out is unordered here; callers sort by dt client-side. Callers flag
+-- round-amount dispersal (identical integer amounts).
 CREATE QUERY q_mule_fanout(STRING hub_card, UINT start_dt, UINT end_dt) FOR GRAPH fraud_graph {
   Seed = {CARD.*};
   Seed = SELECT s FROM Seed:s WHERE s.card_id == hub_card;
   Out = SELECT t FROM Seed:s -(MADE_WITH)- TRANSACTION:t
-        WHERE t.dt BETWEEN start_dt AND end_dt
-        ORDER BY t.dt;
+        WHERE t.dt BETWEEN start_dt AND end_dt;
   Recipients = SELECT e FROM Out:t -(USED_EMAIL)- EMAIL:e;
   PRINT Out, Recipients;
 }
@@ -51,7 +52,7 @@ CREATE QUERY q_mule_fanout(STRING hub_card, UINT start_dt, UINT end_dt) FOR GRAP
 -- Q4: q_takeover_anomaly — account-takeover anomaly for a card.
 -- Params: card_id (CARD.card_id), window_secs (velocity window over dt).
 -- Returns: Txns (TRANSACTION evidence IDs), Devices/Emails/Addrs showing
---   addr/device/email change plus velocity. Covers pattern B (account_takeover).
+--   addr/device/email change plus velocity. Covers account_takeover investigations.
 CREATE QUERY q_takeover_anomaly(STRING card_id, UINT window_secs) FOR GRAPH fraud_graph {
   Seed = {CARD.*};
   Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
@@ -66,7 +67,7 @@ CREATE QUERY q_takeover_anomaly(STRING card_id, UINT window_secs) FOR GRAPH frau
 -- Q5: q_synthetic_identity — synthetic-identity signals for a card.
 -- Params: card_id (CARD.card_id).
 -- Returns: Txns (TRANSACTION evidence IDs), Ids (IDENTITY vertices: thin-file
---   C-counts, all-F M-flags, id_ mismatch signals). Covers pattern E.
+--   C-counts, all-F M-flags, id_ mismatch signals). Supports account_takeover investigations (synthetic-identity style signals).
 CREATE QUERY q_synthetic_identity(STRING card_id) FOR GRAPH fraud_graph {
   Seed = {CARD.*};
   Seed = SELECT s FROM Seed:s WHERE s.card_id == card_id;
@@ -77,11 +78,68 @@ CREATE QUERY q_synthetic_identity(STRING card_id) FOR GRAPH fraud_graph {
 
 -- Q6: q_evidence_subgraph — bounded k-hop evidence export around case entities.
 -- Params: txn_ids (seed TRANSACTION ids), hops (max traversal depth, default 2).
--- Returns: Seed (TRANSACTION evidence IDs), N1 (1-hop CARD/DEVICE/EMAIL/
---   ADDRESS/IDENTITY node IDs). Used by runner to build evidence_ids.
+-- Returns: AllN (seed TRANSACTION evidence IDs plus node IDs reached within
+--   `hops` traversals). Used by runner to build evidence_ids.
 CREATE QUERY q_evidence_subgraph(SET<UINT> txn_ids, INT hops = 2) FOR GRAPH fraud_graph {
   Seed = {TRANSACTION.*};
   Seed = SELECT s FROM Seed:s WHERE s.txn_id IN txn_ids;
-  N1 = SELECT n FROM Seed:s -((MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)-)- :n;
-  PRINT Seed, N1;
+  AllN = Seed;
+  Frontier = Seed;
+  INT i = 0;
+  WHILE i < hops DO
+    BEGIN
+      Nxt = SELECT n FROM Frontier:s
+            -((MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)-)- :n;
+      NewN = Nxt MINUS AllN;
+      AllN = AllN UNION Nxt;
+      Frontier = NewN;
+      i = i + 1;
+    END;
+  PRINT AllN;
+}
+
+-- Q7: q_get_transactions — full attribute rows for a set of transactions.
+-- Params: transaction_ids (seed TRANSACTION ids).
+-- Returns: Txns (TRANSACTION vertices with amt, dt, product_cd).
+-- NOTE: is_fraud is a benchmark-only label and is deliberately NOT printed:
+-- live investigations must not see ground truth. Backs the local
+-- get_transactions tool (src/mcp/tools.py) via the MCP bridge.
+CREATE QUERY q_get_transactions(SET<UINT> transaction_ids) FOR GRAPH fraud_graph {
+  Txns = {TRANSACTION.*};
+  Txns = SELECT t FROM Txns:t WHERE t.txn_id IN transaction_ids;
+  PRINT Txns;
+}
+
+-- Q8: q_ring_components — weakly connected components over the
+-- CARD—TRANSACTION—DEVICE subgraph via label propagation. This is a genuine
+-- graph algorithm (iterative min-label diffusion over the full edge set),
+-- not a bounded traversal: every card linked to another through any chain
+-- of shared devices converges to one component label. Components with more
+-- than one card are candidate fraud rings for R6/R9 analyst review.
+-- Params: max_iter (label-propagation rounds, default 10).
+-- Returns: CardComp (card_id -> component label), CompSize (component -> card count).
+CREATE QUERY q_ring_components(INT max_iter = 10) FOR GRAPH fraud_graph {
+  MinAccum<STRING> @comp;
+  MapAccum<STRING, STRING> @@card_comp;
+  MapAccum<STRING, INT> @@comp_size;
+
+  Cards = {CARD.*};
+  Cards = SELECT c FROM Cards:c ACCUM c.@comp += c.card_id;
+  Devs = SELECT d FROM {DEVICE.*}:d ACCUM d.@comp += d.device;
+
+  INT i = 0;
+  WHILE i < max_iter DO
+    i = i + 1;
+    S1 = SELECT c FROM {CARD.*}:c
+         -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+         ACCUM c.@comp += d.@comp;
+    S2 = SELECT d FROM {DEVICE.*}:d
+         -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+         ACCUM d.@comp += c.@comp;
+  END;
+
+  Assign = SELECT c FROM {CARD.*}:c
+           POST-ACCUM @@card_comp += (c.card_id -> c.@comp);
+  Sizes = SELECT c FROM {CARD.*}:c ACCUM @@comp_size += (c.@comp -> 1);
+  PRINT @@card_comp, @@comp_size;
 }

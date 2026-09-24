@@ -1,73 +1,95 @@
 # Fraud patterns (GraphRAG corpus seed)
 
-> Synthetic stub — each pattern below is hand-wired into `transactions.csv`
-> (12 fraud rows per pattern, seed=42). Field names follow IEEE-CIS.
+> Official pattern definitions from the HHGOA_IEEE dataset README
+> ("The five known fraud patterns"), transcribed 2026-09-21. These are the
+> patterns the bank's analysts recognize; they are not the only patterns in
+> the data. `undocumented` covers confirmed abuse matching none of the five;
+> `none` marks cleared alerts.
 
-## PATTERN card_not_present_ring
+## PATTERN card_testing
 
-- **Name:** card_not_present_ring
-- **Description:** One stolen card (card1) or purchaser email reused across many
-  rapid card-not-present transactions, often across merchants, to cash out before
-  the card is blocked.
-- **Graph signals:** CARD node with high out-degree to TRANSACTION nodes inside a
-  1-hour window; shared P_emaildomain fan-in; `q_card_ring` expansion returns
-  10+ transactions for one card.
-- **Column signals:** TransactionDT span < 3600s for 10+ rows sharing card1;
-  C1 (tx per card window) >= 8; V1 > 1.5; M1/M2 = F with M3 = T.
-- **Severity:** high
-- **Stub rows:** TransactionID 1001–1012 (card1 411111). Negative control: family
-  shared card, low velocity, all M = T.
+- **Name:** card_testing
+- **Description:** A stolen card number is checked before use: three or more
+  tiny online authorizations, often under $5, then a larger purchase.
+  Confirmed by the sequence itself. Policy R5.
+- **Graph signals:** CARD node with >=3 small-amount online TRANSACTION nodes
+  inside a 1-hour window, followed by a larger purchase within 24h.
+- **Column signals:** TransactionAmt < 5 for the probe authorizations;
+  ProductCD != W (online); a later TransactionAmt an order of magnitude larger.
+- **Policy:** R5 — three or more small online authorizations within an hour
+  plus a larger purchase: DECLINE_TRANSACTION and STEP_UP_AUTH; if a purchase
+  over $100 already cleared, BLOCK_CARD.
+
+## PATTERN card_not_present_fraud
+
+- **Name:** card_not_present_fraud
+- **Description:** The card number is used online without the card. Amounts
+  and products that don't fit the cardholder's history, often in a burst of
+  two to four within 48 hours. On its own, one unusual online purchase is
+  ambiguous: verify. Policy R1 to R4.
+- **Graph signals:** burst of 2-4 online TRANSACTION nodes in 48h on one CARD,
+  amounts above the card's history envelope.
+- **Column signals:** ProductCD != W; TransactionAmt inconsistent with the
+  card's 60-day median/max; new P_emaildomain vs history.
+- **Policy:** R1 (verify before blocking on a weak signal), R2/R3/R4
+  (customer response handling).
+
+## PATTERN card_not_present_new_device
+
+- **Name:** card_not_present_new_device
+- **Description:** Same as card-not-present fraud, with the identity record
+  marking the device as New for this account, sometimes behind a proxy.
+  Stronger than pattern 2, still not proof: people buy new phones.
+- **Graph signals:** online burst as above, plus the TRANSACTION's
+  FROM_DEVICE edge leads to a DeviceProfile never seen for the card.
+- **Column signals:** id_15 = New for the flagged transaction while earlier
+  transactions show Found or another device; id_23 proxy flags
+  (transparent/anonymous/hidden); new DeviceInfo.
+- **Policy:** R1-R4; the new-device signal strengthens suspicion but a
+  single signal still means verify first.
+
+## PATTERN out_of_region_use
+
+- **Name:** out_of_region_use
+- **Description:** Card-present purchases in a billing region the cardholder
+  has no history in, while their normal activity continues at home. Several
+  days of purchases in one new region is a trip, not a clone. Policy R2, R3.
+- **Graph signals:** in-person TRANSACTION nodes BILLED_IN a BillingRegion
+  with no prior edge from the CARD, while HOME-region transactions continue
+  in the same week.
+- **Column signals:** ProductCD = W (in person); addr1 unseen in 90 days of
+  history; addr2 = 87 continuing on other transactions.
+- **Policy:** R2 (customer denies -> BLOCK_CARD + CREATE_CASE), R3
+  (customer confirms -> CLOSE_NO_FRAUD).
 
 ## PATTERN account_takeover
 
 - **Name:** account_takeover
-- **Description:** Legitimate account hijacked: a never-before-seen DeviceInfo
-  appears for an established card, paired with address/email change and an
-  amount spike as the attacker drains the account.
-- **Graph signals:** CARD node gains a new USED_DEVICE edge; `q_takeover`
-  shows device/email/address change plus velocity break for the card.
-- **Column signals:** D1 near 0 (first event on new device); dist1/dist2 large
-  (>= 100); addr2 != addr1; M1/M2 flip T -> F; TransactionAmt 10x baseline.
-- **Severity:** critical
-- **Stub rows:** TransactionID 1013–1024 (card1 522222; first 4 rows baseline,
-  last 8 post-takeover). Negative control: phone upgrade, stable profile.
+- **Description:** Mixed-channel activity inconsistent with the cardholder,
+  often with device and match-flag anomalies, pointing to stolen credentials
+  rather than a stolen number.
+- **Graph signals:** CARD with both in-person and online TRANSACTION nodes
+  in 48h; a new FROM_DEVICE edge; prior device profile abandoned.
+- **Column signals:** channel mix; DeviceInfo/OS/browser change; M1-M9
+  match flags flipping vs the card's mode; id_34 match-status anomalies.
+- **Policy:** R2/R3/R4 by customer response; R10 guards BLOCK_ALL_CARDS.
 
-## PATTERN money_mule_fanout
+## PATTERN undocumented
 
-- **Name:** money_mule_fanout
-- **Description:** One hub card disperses funds to many recipient emails in rapid
-  succession, often in identical round amounts — classic mule-network payout.
-- **Graph signals:** 1-to-N CARD -> TRANSACTION -> EMAIL topology within minutes;
-  `q_mule_fanout` returns 10+ distinct recipient emails for one hub card.
-- **Column signals:** identical round TransactionAmt (900.00); C2 (recipients per
-  hub) >= 9; distinct R_emaildomain per row; DT spacing ~5 minutes.
-- **Severity:** high
-- **Stub rows:** TransactionID 1025–1036 (hub card1 633333). Negative control:
-  payroll — monthly cadence, stable employee recipients.
+- **Name:** undocumented
+- **Description:** Analysts confirmed fraud but could not match it to a
+  known pattern. Noticing activity that fits none of the five, describing
+  it in your own words, and recommending a defensible action is scored.
+- **Graph signals:** coordinated or repeated abuse across customers via
+  shared device profiles, region clusters, or recipient emails.
+- **Policy:** R9 — CREATE_CASE, FILE_REPORT, ESCALATE_TO_ANALYST; describe
+  the pattern in your own words; do not force it into a known category.
 
-## PATTERN device_spoofing_cluster
+## PATTERN none
 
-- **Name:** device_spoofing_cluster
-- **Description:** Many distinct cards funnelled through a single DeviceInfo
-  fingerprint (emulator/spoofed device) running automated fraud at scale.
-- **Graph signals:** DEVICE node with high in-degree from distinct CARD nodes;
-  `q_device_cluster` returns 10+ cards for one DeviceInfo.
-- **Column signals:** cards-per-device >= 10; all M1–M9 = F; identity fields
-  missing/thin; V1 > 2.5; D1 near 0.
-- **Severity:** critical
-- **Stub rows:** TransactionID 1037–1048 (DeviceInfo emu-spoof-X1, 12 distinct
-  cards). Negative control: corporate NAT, long histories, normal amounts.
-
-## PATTERN synthetic_identity
-
-- **Name:** synthetic_identity
-- **Description:** Fabricated identity fragments stitched into a "thin file":
-  brand-new accounts with no history, mismatched identity signals, and fast
-  early velocity at high amounts.
-- **Graph signals:** fresh CARD/IDENTITY nodes with shallow history;
-  `q_synthetic` flags thin-file plus mismatch for the card.
-- **Column signals:** C1 = 1 (thin file); D1 low (1–3 days); all M flags = F;
-  id_ mismatch/empty in identity.csv; high TransactionAmt for account age.
-- **Severity:** medium
-- **Stub rows:** TransactionID 1049–1060 (4 cards x 3 txns). Negative control:
-  student first card — thin file but small amounts, verified university email.
+- **Name:** none
+- **Description:** Cleared alerts: the activity was legitimate. Half the
+  cases are legitimate; an agent that blocks everything scores badly.
+- **Policy:** R3 (customer confirms -> CLOSE_NO_FRAUD), R7 (disputed but
+  legitimate recurring charge -> CREATE_CASE + VERIFY_WITH_CUSTOMER +
+  WARN_CUSTOMER, do not block).

@@ -1,8 +1,10 @@
-"""Runner tests: OUTPUT_SCHEMA contract + validate_output + run_case.
+"""Runner tests: official answer contract + run_case on HHG inputs.
 
-Validates the exact 16-field schema (PLAN.md section 4) and exercises
-run_case on a small real case when cases/inputs/ exists (skips otherwise).
-Offline; run_case writes cases/outputs/<case_id>.json as a side effect.
+Exercises src.agent.runner.run_case against the synthetic fallback dataset
+(HHGOA_DATA_DIR unset and real data absent): the flagged HHG txns are not in
+the stub, so each case must yield the honest fallback answer, which must
+validate against the official format. Answers are written to a temp dir, not
+cases/, to keep the working tree clean.
 """
 from __future__ import annotations
 
@@ -12,72 +14,55 @@ from pathlib import Path
 import pytest
 
 from src.agent import runner
-from src.agent.runner import OUTPUT_SCHEMA, run_case, validate_output
-
-EXPECTED_SCHEMA = [
-    "case_id", "verdict", "fraud_pattern", "confidence", "risk_score",
-    "evidence_ids", "transactions_reviewed", "entities_flagged",
-    "graph_findings", "rag_citations", "actions_taken", "policy_decisions",
-    "amounts", "timeline", "explanation", "recommended_next_steps",
-]
+from src.agent.runner import OUTPUT_SCHEMA, list_cases, run_case
+from src.agent.state import REQUIRED_OUTPUT_FIELDS, validate_output
+from src.data.hhgoa import HHGOAStore
+from src.tigergraph.client import TigerGraphClient
 
 ROOT = Path(__file__).resolve().parents[1]
-INPUTS = ROOT / "cases" / "inputs"
-OUTPUTS = ROOT / "cases" / "outputs"
 
 
-def _good_record() -> dict:
-    return {
-        "case_id": "case_t99", "verdict": "fraud", "fraud_pattern": "account_takeover",
-        "confidence": 0.9, "risk_score": 90.0, "evidence_ids": ["1013"],
-        "transactions_reviewed": [1013], "entities_flagged": {"cards": []},
-        "graph_findings": [], "rag_citations": [], "actions_taken": [],
-        "policy_decisions": [], "amounts": {"total": 1.0, "max": 1.0, "currency": "USD"},
-        "timeline": [], "explanation": "x", "recommended_next_steps": [],
-    }
+def test_output_schema_matches_official_top_level():
+    assert OUTPUT_SCHEMA == REQUIRED_OUTPUT_FIELDS
+    assert OUTPUT_SCHEMA == [
+        "case_id", "case", "evidence_requests", "next_best_actions",
+        "sar", "stop_reason", "tool_calls", "tokens", "latency_s",
+    ]
 
 
-def test_output_schema_is_exact_16_fields():
-    assert runner.OUTPUT_SCHEMA == EXPECTED_SCHEMA
-    assert len(OUTPUT_SCHEMA) == 16
+def test_list_cases_finds_20_hhg_inputs():
+    cases = list_cases()
+    assert len(cases) == 20
+    assert cases[0].stem == "HHG-001" and cases[-1].stem == "HHG-020"
 
 
-def test_validate_output_accepts_good_record():
-    assert validate_output(_good_record()) == []
+def _fallback_store() -> HHGOAStore:
+    store = HHGOAStore(ROOT / "data" / "HHGOA_IEEE")
+    assert store.is_fallback
+    return store.load()
 
 
-def test_validate_output_rejects_missing_fields():
-    errors = validate_output({"case_id": "x"})
-    assert any("missing field" in e for e in errors)
-    assert len(errors) >= len(EXPECTED_SCHEMA) - 1
+def test_run_case_fallback_answer_validates(tmp_path):
+    store = _fallback_store()
+    case_input = json.loads(
+        (ROOT / "cases" / "inputs" / "HHG-001.json").read_text(encoding="utf-8")
+    )
+    answer = run_case(case_input, store, client=None)
+    assert answer["case_id"] == "HHG-001"
+    assert validate_output(answer) == []
+    # fallback honesty: no invented verdict
+    assert answer["case"]["verdict"] == "uncertain"
+    out = tmp_path / "HHG-001.json"
+    out.write_text(json.dumps(answer, indent=1), encoding="utf-8")
+    assert json.loads(out.read_text())["case_id"] == "HHG-001"
 
 
-def test_validate_output_rejects_bad_verdict():
-    rec = _good_record()
-    rec["verdict"] = "maybe"
-    assert any("bad verdict" in e for e in validate_output(rec))
-
-
-def test_validate_output_rejects_fraud_without_evidence():
-    rec = _good_record()
-    rec["evidence_ids"] = []
-    assert any("evidence_ids" in e for e in validate_output(rec))
-
-
-def test_run_case_small_real_case():
-    case_path = INPUTS / "case_01.json"
-    if not case_path.exists():
-        pytest.skip("cases/inputs/case_01.json not present yet")
-    output = run_case("case_01")
-    assert validate_output(output) == []
-    assert output["verdict"] in ("fraud", "legit", "escalate")
-    if output["verdict"] == "fraud":
-        assert len(output["evidence_ids"]) >= 1
-    written = OUTPUTS / "case_01.json"
-    assert written.exists()
-    assert json.loads(written.read_text(encoding="utf-8"))["case_id"] == "case_01"
-
-
-def test_run_case_unknown_id_raises():
-    with pytest.raises(FileNotFoundError):
-        run_case("case_zz_does_not_exist")
+def test_case_inputs_have_official_ids():
+    data = json.loads(
+        (ROOT / "cases" / "inputs" / "HHG-014.json").read_text(encoding="utf-8")
+    )
+    assert data["flagged_txn_id"] == "3478561"
+    assert data["card_id"] == "C13487-K1"
+    assert data["customer_id"] == "C13487"
+    assert data["trigger_type"] == "analyst_request"
+    assert "device profile" in data["trigger_text"]

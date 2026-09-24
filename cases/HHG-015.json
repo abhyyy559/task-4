@@ -1,0 +1,232 @@
+{
+ "case_id": "HHG-015",
+ "case": {
+  "status": "closed_fraud",
+  "verdict": "fraud",
+  "fraud_probability": 0.9175,
+  "pattern": "account_takeover",
+  "pattern_description": "",
+  "affected_txn_ids": [
+   "3462385",
+   "3462387",
+   "3462404",
+   "3464869"
+  ],
+  "first_suspicious_txn_id": "3462385",
+  "connected_card_ids": [
+   "C00681-K1",
+   "C01155-K2",
+   "C02881-K1",
+   "C05292-K1",
+   "C05704-K2",
+   "C11227-K2",
+   "C11413-K1"
+  ],
+  "connected_device_profiles": [
+   "Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050"
+  ],
+  "exposure_usd": 2140.94,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3464869: channel=online, amount=$599.94, billing region 327.0, device marked 'New'",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3464869",
+     "C03042-K1"
+    ]
+   },
+   {
+    "claim": "Card C03042-K1 baseline (60d before flag): 15 transactions, median amount $99.96, max $550.03, usual channels {'online': 9, 'in_person': 6}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C03042-K1"
+    ]
+   },
+   {
+    "claim": "Bank model scored transaction 3464869 at 0.77: an input signal, not a verdict (the model is often wrong in both directions)",
+    "source": "external",
+    "ref": "model:risk_score",
+    "entity_ids": [
+     "3464869"
+    ]
+   },
+   {
+    "claim": "Device profile 'Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050' is shared by 8 cards: C03042-K1 plus C00681-K1, C01155-K2, C02881-K1, C05292-K1, C05704-K2...",
+    "source": "graph",
+    "ref": "q_device_sharing",
+    "entity_ids": [
+     "C03042-K1",
+     "C00681-K1",
+     "C01155-K2",
+     "C02881-K1",
+     "C05292-K1",
+     "C05704-K2"
+    ]
+   },
+   {
+    "claim": "Region cluster: 1 foreign card(s) made card-present purchases in billing region 327.0 within a week of the flag with burst activity near the flag",
+    "source": "graph",
+    "ref": "q_region_cluster",
+    "entity_ids": [
+     "C00235-K2"
+    ]
+   },
+   {
+    "claim": "Account-takeover signature on card C03042-K1: channel mix ['in_person', 'online'] in 48h; device changed",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3462385",
+     "3462387",
+     "3462404",
+     "3464869"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0615 (confirmed_fraud, pattern=card_not_present_new_device): Case CC-0615: cardholder C03042 reported unrecognized activity on card C03042-K1. 1 transaction(s) between 2016-07-16 and 2016-07-16 totaling $174.99 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0615"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1313 (cleared, pattern=none): Case CC-1313: model scored a $100.08 transaction at 0.87. Cardholder confirmed travel to the billing region in question. Alert cleared.",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1313"
+    ]
+   },
+   {
+    "claim": "Prior case CC-3886 (confirmed_fraud, pattern=card_not_present_new_device): Case CC-3886: cardholder C03042 reported unrecognized activity on card C03042-K1. 1 transaction(s) between 2016-09-23 and 2016-09-23 totaling $175.05 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-3886"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0008 (confirmed_fraud, pattern=account_takeover): Case CC-0008: cardholder C03667 reported unrecognized activity on card C03667-K1. 1 transaction(s) between 2016-07-02 and 2016-07-02 totaling $49.04 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0008"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0013 (confirmed_fraud, pattern=account_takeover): Case CC-0013: cardholder C11464 reported unrecognized activity on card C11464-K2. 1 transaction(s) between 2016-07-03 and 2016-07-03 totaling $261.95 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0013"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Amount spike: flagged $599.94 exceeds 5x the card's 60-day median ($99.96)",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "3464869"
+    ]
+   },
+   {
+    "claim": "Case HHG-015 written to the graph as CASE-HHG-015 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-015"
+    ]
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-0615",
+   "CC-1313",
+   "CC-3886",
+   "CC-0008",
+   "CC-0013"
+  ],
+  "summary": "Case HHG-015: a risk-score alert on transaction 3464869 ($599.94, online) for card C03042-K1. Investigation found a account takeover episode of 4 transaction(s) with exposure $2,140.94 (fraud probability 0.92). Similar prior cases consulted: CC-0615, CC-1313, CC-3886, CC-0008, CC-0013.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-015"
+ },
+ "evidence_requests": [],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "Fraud probability 0.92 supported by 3 independent signals; recommend block with human approval"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: fraud probability >= 0.30"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "3a: SAR conditions met (exposure > $1,000, shared origin, or undocumented pattern)"
+   },
+   {
+    "action": "MONITOR_CONNECTED_CARDS",
+    "route": "auto",
+    "reason": "R6: monitor every card sharing the origin"
+   }
+  ],
+  "final": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "Fraud probability 0.92 supported by 3 independent signals; recommend block with human approval"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "3a: fraud probability >= 0.30"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "3a: SAR conditions met (exposure > $1,000, shared origin, or undocumented pattern)"
+   },
+   {
+    "action": "MONITOR_CONNECTED_CARDS",
+    "route": "auto",
+    "reason": "R6: monitor every card sharing the origin"
+   }
+  ],
+  "what_changed": "nothing"
+ },
+ "sar": {
+  "file": true,
+  "reason": "3a: fraud is confirmed or strongly suspected and at least one SAR condition holds: exposure $2,140.94 exceeds $1,000, shared device profile / region cluster / another card's fraud",
+  "narrative": "WHO: customer C03042, card C03042-K1, with connected cards C00681-K1, C01155-K2, C02881-K1, C05292-K1. WHAT: 4 transaction(s) totaling $2,140.94 identified as a account takeover episode. WHEN: between 2016-11-16 and 2016-11-17. WHERE: via in_person, online channels in billing region(s) 299.0, 327.0. HOW: The flagged transaction 3464869 ($599.94) triggered review; graph analysis of the card's history, device records, and cross-card device/region edges identified the episode. A shared device profile links this case to 7 other card(s). WHY SUSPICIOUS: The activity is inconsistent with the cardholder's history and matches the account takeover pattern (assessed fraud probability 0.92 from 13 evidence items); innocent explanations were considered and rejected on the evidence.",
+  "subjects": [
+   "C03042",
+   "C03042-K1",
+   "C00681-K1",
+   "C01155-K2",
+   "C02881-K1",
+   "C05292-K1",
+   "Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050"
+  ],
+  "total_amount_usd": 2140.94,
+  "activity_dates": [
+   "2016-11-16",
+   "2016-11-17"
+  ]
+ },
+ "stop_reason": "Fraud probability 0.92 at or above 0.85, supported by 13 independent pieces of evidence",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 0.966
+}

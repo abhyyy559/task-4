@@ -4,13 +4,69 @@
   "module": "src.mcp.tools",
   "entrypoint": "call_tool",
   "tools": [
-    {"name": "get_transactions", "description": "Fetch transactions by ID (no labels).", "args": {"transaction_ids": "int[]"}},
-    {"name": "card_ring", "description": "Transactions sharing a card (q_card_ring).", "args": {"card1": "uint"}},
-    {"name": "device_cluster", "description": "Cards funnelled through one device (q_device_cluster).", "args": {"device": "string"}},
-    {"name": "mule_fanout", "description": "Recipients downstream of a hub card (q_mule_fanout).", "args": {"hub_card": "uint"}},
-    {"name": "takeover", "description": "Device/email change signals for a card (q_takeover).", "args": {"card1": "uint"}},
-    {"name": "synthetic", "description": "Thin-file / mismatch signals for a card (q_synthetic).", "args": {"card1": "uint"}},
-    {"name": "evidence_subgraph", "description": "Bounded k-hop evidence neighbourhood (q_evidence_subgraph).", "args": {"transaction_ids": "int[]"}},
-    {"name": "fraud_knowledge", "description": "GraphRAG pattern lookup.", "args": {"query": "string", "k": "int?"}}
+    {
+      "name": "get_transactions",
+      "description": "Fetch transactions by ID (no labels).",
+      "args": {
+        "transaction_ids": "int[]"
+      }
+    },
+    {
+      "name": "card_ring",
+      "description": "Transactions sharing a card (q_card_ring).",
+      "args": {
+        "card1": "uint"
+      }
+    },
+    {
+      "name": "device_cluster",
+      "description": "Cards funnelled through one device (q_device_cluster).",
+      "args": {
+        "device": "string"
+      }
+    },
+    {
+      "name": "mule_fanout",
+      "description": "Recipients downstream of a hub card (q_mule_fanout).",
+      "args": {
+        "hub_card": "uint"
+      }
+    },
+    {
+      "name": "takeover",
+      "description": "Device/email change signals for a card (q_takeover).",
+      "args": {
+        "card1": "uint"
+      }
+    },
+    {
+      "name": "synthetic",
+      "description": "Thin-file / mismatch signals for a card (q_synthetic).",
+      "args": {
+        "card1": "uint"
+      }
+    },
+    {
+      "name": "evidence_subgraph",
+      "description": "Bounded k-hop evidence neighbourhood (q_evidence_subgraph).",
+      "args": {
+        "transaction_ids": "int[]"
+      }
+    },
+    {
+      "name": "ring_components",
+      "description": "WCC fraud-ring components over card/device graph (q_ring_components).",
+      "args": {
+        "min_size": "int?"
+      }
+    },
+    {
+      "name": "fraud_knowledge",
+      "description": "GraphRAG pattern lookup.",
+      "args": {
+        "query": "string",
+        "k": "int?"
+      }
+    }
   ]
 }

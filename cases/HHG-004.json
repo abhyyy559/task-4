@@ -1,0 +1,220 @@
+{
+ "case_id": "HHG-004",
+ "case": {
+  "status": "closed_fraud",
+  "verdict": "fraud",
+  "fraud_probability": 0.99,
+  "pattern": "card_not_present_new_device",
+  "pattern_description": "",
+  "affected_txn_ids": [
+   "3580804",
+   "3583227"
+  ],
+  "first_suspicious_txn_id": "3580804",
+  "connected_card_ids": [
+   "C02222-K1",
+   "C03095-K2",
+   "C04248-K2",
+   "C05031-K2",
+   "C07518-K2"
+  ],
+  "connected_device_profiles": [
+   "firefox 47.0"
+  ],
+  "exposure_usd": 221.19,
+  "evidence": [
+   {
+    "claim": "Flagged transaction 3583227: channel=online, amount=$128.33, billing region n/a, device marked 'New'",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3583227",
+     "C08106-K1"
+    ]
+   },
+   {
+    "claim": "Card C08106-K1 baseline (60d before flag): 65 transactions, median amount $29.76, max $138.89, usual channels {'online': 65}",
+    "source": "graph",
+    "ref": "q_card_history",
+    "entity_ids": [
+     "C08106-K1"
+    ]
+   },
+   {
+    "claim": "Customer C08106 denies transaction 3583227: Customer C08106 message: 'I never made this $128.33 purchase. Please check my card.' Refers to 3583227.",
+    "source": "customer",
+    "ref": "customer:trigger:HHG-004",
+    "entity_ids": [
+     "3583227",
+     "C08106-K1",
+     "C08106"
+    ]
+   },
+   {
+    "claim": "Device profile 'firefox 47.0' is shared by 6 cards: C08106-K1 plus C02222-K1, C03095-K2, C04248-K2, C05031-K2, C07518-K2",
+    "source": "graph",
+    "ref": "q_device_sharing",
+    "entity_ids": [
+     "C08106-K1",
+     "C02222-K1",
+     "C03095-K2",
+     "C04248-K2",
+     "C05031-K2",
+     "C07518-K2"
+    ]
+   },
+   {
+    "claim": "Coordinated activity: 1 other card(s) on the same device profile show burst activity within 30 days of the flag (C04248-K2)",
+    "source": "graph",
+    "ref": "q_device_sharing",
+    "entity_ids": [
+     "C04248-K2"
+    ]
+   },
+   {
+    "claim": "New-device CNP signature: 2 online transactions in 48h inconsistent with history, from a device marked New for this account",
+    "source": "graph",
+    "ref": "q_device_profile",
+    "entity_ids": [
+     "3580804",
+     "3583227"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0696 (cleared, pattern=none): Case CC-0696: model scored a $13.68 transaction at 0.83. Cardholder confirmed travel to the billing region in question. Alert cleared.",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0696"
+    ]
+   },
+   {
+    "claim": "Prior case CC-1736 (confirmed_fraud, pattern=card_not_present_fraud): Case CC-1736: cardholder C08106 reported unrecognized activity on card C08106-K1. 1 transaction(s) between 2016-08-05 and 2016-08-05 totaling $9.90 were confirm",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-1736"
+    ]
+   },
+   {
+    "claim": "Prior case CC-2121 (confirmed_fraud, pattern=card_not_present_fraud): Case CC-2121: cardholder C08106 reported unrecognized activity on card C08106-K1. 1 transaction(s) between 2016-08-14 and 2016-08-14 totaling $102.68 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-2121"
+    ]
+   },
+   {
+    "claim": "Prior case CC-3778 (confirmed_fraud, pattern=card_not_present_fraud): Case CC-3778: cardholder C08106 reported unrecognized activity on card C08106-K1. 1 transaction(s) between 2016-09-20 and 2016-09-20 totaling $58.42 were confir",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-3778"
+    ]
+   },
+   {
+    "claim": "Prior case CC-0011 (confirmed_fraud, pattern=card_not_present_new_device): Case CC-0011: cardholder C13259 reported unrecognized activity on card C13259-K1. 1 transaction(s) between 2016-07-02 and 2016-07-02 totaling $149.95 were confi",
+    "source": "graph",
+    "ref": "q_closed_cases",
+    "entity_ids": [
+     "CC-0011"
+    ]
+   },
+   {
+    "claim": "Fraud Policy v1.0 R1-R10 governs actions, approval routes (auto/L1/L2), SAR conditions, case-open threshold (0.30), and stopping criteria",
+    "source": "document",
+    "ref": "doc:fraud-policy",
+    "entity_ids": []
+   },
+   {
+    "claim": "Case HHG-004 written to the graph as CASE-HHG-004 so later investigations can retrieve it",
+    "source": "graph",
+    "ref": "graph:write_case",
+    "entity_ids": [
+     "CASE-HHG-004"
+    ]
+   }
+  ],
+  "similar_prior_cases": [
+   "CC-0696",
+   "CC-1736",
+   "CC-2121",
+   "CC-3778",
+   "CC-0011"
+  ],
+  "summary": "Case HHG-004: a customer denial on transaction 3583227 ($128.33, online) for card C08106-K1. Investigation found a card not present new device episode of 2 transaction(s) with exposure $221.19 (fraud probability 0.99). Similar prior cases consulted: CC-0696, CC-1736, CC-2121, CC-3778, CC-0011.",
+  "written_to_graph": true,
+  "graph_case_id": "CASE-HHG-004"
+ },
+ "evidence_requests": [],
+ "next_best_actions": {
+  "initial": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C08106 denies transaction 3583227; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "R2/3a: exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud"
+   },
+   {
+    "action": "MONITOR_CONNECTED_CARDS",
+    "route": "auto",
+    "reason": "R6: shared origin links 5 other card(s)"
+   }
+  ],
+  "final": [
+   {
+    "action": "BLOCK_CARD",
+    "route": "L1",
+    "reason": "R2: customer C08106 denies transaction 3583227; recommend BLOCK_CARD and CREATE_CASE"
+   },
+   {
+    "action": "CREATE_CASE",
+    "route": "auto",
+    "reason": "R2: open a case with the evidence attached and write it to the graph"
+   },
+   {
+    "action": "FILE_REPORT",
+    "route": "L2",
+    "reason": "R2/3a: exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud"
+   },
+   {
+    "action": "MONITOR_CONNECTED_CARDS",
+    "route": "auto",
+    "reason": "R6: shared origin links 5 other card(s)"
+   }
+  ],
+  "what_changed": "nothing"
+ },
+ "sar": {
+  "file": true,
+  "reason": "3a: fraud is confirmed or strongly suspected and at least one SAR condition holds: shared device profile / region cluster / another card's fraud",
+  "narrative": "WHO: customer C08106, card C08106-K1, with connected cards C02222-K1, C03095-K2, C04248-K2, C05031-K2. WHAT: 2 transaction(s) totaling $221.19 identified as a card not present new device episode. WHEN: between 2016-12-28 and 2016-12-29. WHERE: via online channels. HOW: The flagged transaction 3583227 ($128.33) triggered review; graph analysis of the card's history, device records, and cross-card device/region edges identified the episode. A shared device profile links this case to 5 other card(s). WHY SUSPICIOUS: The activity is inconsistent with the cardholder's history and matches the card not present new device pattern (assessed fraud probability 0.99 from 12 evidence items); innocent explanations were considered and rejected on the evidence.",
+  "subjects": [
+   "C08106",
+   "C08106-K1",
+   "C02222-K1",
+   "C03095-K2",
+   "C04248-K2",
+   "C05031-K2",
+   "firefox 47.0"
+  ],
+  "total_amount_usd": 221.19,
+  "activity_dates": [
+   "2016-12-28",
+   "2016-12-29"
+  ]
+ },
+ "stop_reason": "Fraud probability 0.99 at or above 0.85, supported by 12 independent pieces of evidence",
+ "tool_calls": 8,
+ "tokens": 0,
+ "latency_s": 0.048
+}

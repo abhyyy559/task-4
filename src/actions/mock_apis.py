@@ -1,20 +1,12 @@
 """Simulated enforcement / notification APIs (offline, stdlib only).
 
-Two name families are exposed (merged for cross-worker compatibility):
+Functions are named with the EXACT official action identifiers from Fraud
+Policy v1.0 (config/policies.yaml). Only `auto`-route actions are ever
+dispatched here by src/actions/executor.py; L1/L2 actions are recorded as
+recommendations awaiting human approval and never reach these functions.
 
-- Spec family (S4.4.1): ``freeze_account``, ``block_card``,
-  ``notify_customer``, ``escalate_to_analyst``, ``file_sar``,
-  ``step_up_auth`` — return
-  ``{status: simulated, action, target, timestamp, ticket_id}``.
-- Executor family: ``freeze_card``, ``block_device``, ``flag_email``,
-  ``notify_user``, ``escalate_case``, ``refund_transaction`` — return
-  ``{action, target, status: ok, ref, timestamp, ticket_id}`` and are
-  dispatched via ``MOCK_APIS`` by ``src/actions/executor.py``.
-
-Every function is deterministic apart from its unique ticket/ref id, is
-side-effect free, and raises on empty targets (never silent failure).
-Actual side-effect gating lives in ``src/actions/policy.py`` +
-``src/actions/executor.py``; agent code must call those, not this module.
+Every function is side-effect free, deterministic apart from its unique
+ticket/ref id, and raises on empty targets (never silent failure).
 """
 from __future__ import annotations
 
@@ -43,110 +35,117 @@ def _require(target: Any, action: str) -> str:
     return str(target)
 
 
-# -- executor family (dispatched via MOCK_APIS) ----------------------------
-
-def freeze_card(card: Any) -> dict[str, Any]:
-    card = _require(card, "freeze_card")
-    return {"action": "freeze_card", "target": card, "status": "ok",
-            "ref": _ref("freeze_card", card), "timestamp": _now_iso(),
-            "ticket_id": _ticket("freeze_card")}
-
-
-def block_device(device: Any) -> dict[str, Any]:
-    device = _require(device, "block_device")
-    return {"action": "block_device", "target": device, "status": "ok",
-            "ref": _ref("block_device", device), "timestamp": _now_iso(),
-            "ticket_id": _ticket("block_device")}
-
-
-def flag_email(email: Any) -> dict[str, Any]:
-    email = _require(email, "flag_email")
-    return {"action": "flag_email", "target": email, "status": "ok",
-            "ref": _ref("flag_email", email), "timestamp": _now_iso(),
-            "ticket_id": _ticket("flag_email")}
-
-
-def notify_user(user: Any, message: str = "") -> dict[str, Any]:
-    user = _require(user, "notify_user")
-    return {"action": "notify_user", "target": user, "status": "ok",
-            "ref": _ref("notify_user", user), "message": message,
-            "timestamp": _now_iso(), "ticket_id": _ticket("notify_user")}
-
-
-def escalate_case(case_id: Any, reason: str = "") -> dict[str, Any]:
-    case_id = _require(case_id, "escalate_case")
-    return {"action": "escalate_case", "target": str(case_id), "status": "ok",
-            "ref": _ref("escalate_case", case_id), "reason": reason,
-            "timestamp": _now_iso(), "ticket_id": _ticket("escalate_case")}
-
-
-def refund_transaction(transaction_id: Any) -> dict[str, Any]:
-    transaction_id = _require(transaction_id, "refund_transaction")
-    return {"action": "refund_transaction", "target": str(transaction_id),
-            "status": "ok", "ref": _ref("refund_transaction", transaction_id),
-            "timestamp": _now_iso(), "ticket_id": _ticket("refund_transaction")}
-
-
-# -- spec family (S4.4.1) ----------------------------------------------------
-
 def _result(action: str, target: Any, **extra: Any) -> dict[str, Any]:
     target = _require(target, action)
-    return {"status": "simulated", "action": action, "target": target,
-            "timestamp": _now_iso(), "ticket_id": _ticket(action), **extra}
+    return {
+        "status": "simulated",
+        "action": action,
+        "target": target,
+        "timestamp": _now_iso(),
+        "ticket_id": _ticket(action),
+        **extra,
+    }
 
 
-def freeze_account(account_id: Any, reason: str = "") -> dict[str, Any]:
-    """Simulate freezing an account."""
-    return _result("freeze_account", account_id, reason=reason)
+# -- official actions: auto route (agent may execute) ------------------------
 
 
-def block_card(card1: Any, reason: str = "") -> dict[str, Any]:
-    """Simulate blocking a card."""
-    return _result("block_card", card1, reason=reason)
+def ALLOW_TRANSACTION(transaction_id: Any) -> dict[str, Any]:
+    """Let the flagged transaction stand."""
+    return _result("ALLOW_TRANSACTION", transaction_id)
 
 
-def notify_customer(customer_ref: Any, channel: str = "email",
-                    message: str = "") -> dict[str, Any]:
-    """Simulate notifying a customer (email/sms/push)."""
-    if channel not in ("email", "sms", "push"):
-        raise ValueError(f"notify_customer: unknown channel {channel!r}")
-    return _result("notify_customer", customer_ref, channel=channel, message=message)
+def MONITOR_CARD(card_id: Any, hours: int = 72) -> dict[str, Any]:
+    """Raise monitoring sensitivity on a card for 72 hours."""
+    return _result("MONITOR_CARD", card_id, hours=hours)
 
 
-def escalate_to_analyst(case_id: Any, summary: str = "") -> dict[str, Any]:
-    """Simulate escalating a case to a human analyst."""
-    return _result("escalate_to_analyst", case_id, summary=summary)
+def MONITOR_CONNECTED_CARDS(card_ids: Any) -> dict[str, Any]:
+    """Put linked cards under monitoring."""
+    ids = card_ids if isinstance(card_ids, list) else [card_ids]
+    return _result("MONITOR_CONNECTED_CARDS", ",".join(str(i) for i in ids))
 
 
-def file_sar(subject_ref: Any, amount: float = 0.0,
-             narrative: str = "") -> dict[str, Any]:
-    """Simulate filing a Suspicious Activity Report."""
-    if amount < 0:
-        raise ValueError("file_sar: amount must be >= 0")
-    return _result("file_sar", subject_ref, amount=float(amount), narrative=narrative)
+def WARN_CUSTOMER(customer_ref: Any, message: str = "") -> dict[str, Any]:
+    """Send an informational message to the customer."""
+    return _result("WARN_CUSTOMER", customer_ref, message=message)
 
 
-def step_up_auth(customer_ref: Any, method: str = "otp") -> dict[str, Any]:
-    """Simulate triggering step-up authentication (otp/webauthn/call)."""
+def VERIFY_WITH_CUSTOMER(customer_ref: Any, transaction_id: Any = "") -> dict[str, Any]:
+    """Ask the cardholder whether they made the transaction."""
+    return _result(
+        "VERIFY_WITH_CUSTOMER", customer_ref, transaction_id=str(transaction_id)
+    )
+
+
+def STEP_UP_AUTH(customer_ref: Any, method: str = "otp") -> dict[str, Any]:
+    """Require a one-time passcode or app confirmation."""
     if method not in ("otp", "webauthn", "call"):
-        raise ValueError(f"step_up_auth: unknown method {method!r}")
-    return _result("step_up_auth", customer_ref, method=method)
+        raise ValueError(f"STEP_UP_AUTH: unknown method {method!r}")
+    return _result("STEP_UP_AUTH", customer_ref, method=method)
+
+
+def GENERATE_REPORT(case_ref: Any, summary: str = "") -> dict[str, Any]:
+    """Write up the investigation for the internal record (no case opened)."""
+    return _result("GENERATE_REPORT", case_ref, summary=summary)
+
+
+def CREATE_CASE(case_id: Any, summary: str = "") -> dict[str, Any]:
+    """Open an internal fraud case with the evidence attached."""
+    return _result("CREATE_CASE", case_id, summary=summary)
+
+
+def ESCALATE_TO_ANALYST(case_id: Any, summary: str = "") -> dict[str, Any]:
+    """Hand the case to a human analyst with the evidence."""
+    return _result("ESCALATE_TO_ANALYST", case_id, summary=summary)
+
+
+def CLOSE_NO_FRAUD(alert_ref: Any, note: str = "") -> dict[str, Any]:
+    """Close the alert as legitimate."""
+    return _result("CLOSE_NO_FRAUD", alert_ref, note=note)
+
+
+# -- official actions: L1/L2 route (recommendation only; never dispatched) ---
+
+
+def DECLINE_TRANSACTION(transaction_id: Any) -> dict[str, Any]:
+    """Decline the flagged authorization only. Card stays active."""
+    return _result("DECLINE_TRANSACTION", transaction_id)
+
+
+def BLOCK_CARD(card_id: Any, reason: str = "") -> dict[str, Any]:
+    """Block a card and reissue."""
+    return _result("BLOCK_CARD", card_id, reason=reason)
+
+
+def BLOCK_ALL_CARDS(customer_id: Any, reason: str = "") -> dict[str, Any]:
+    """Block every card the customer holds."""
+    return _result("BLOCK_ALL_CARDS", customer_id, reason=reason)
+
+
+def FILE_REPORT(case_id: Any, amount: float = 0.0, narrative: str = "") -> dict[str, Any]:
+    """File a suspicious activity report with the regulator."""
+    if amount < 0:
+        raise ValueError("FILE_REPORT: amount must be >= 0")
+    return _result("FILE_REPORT", case_id, amount=float(amount), narrative=narrative)
 
 
 MOCK_APIS = {
-    "freeze_card": freeze_card,
-    "block_device": block_device,
-    "flag_email": flag_email,
-    "notify_user": notify_user,
-    "escalate_case": escalate_case,
-    "refund_transaction": refund_transaction,
-    "freeze_account": freeze_account,
-    "block_card": block_card,
-    "notify_customer": notify_customer,
-    "escalate_to_analyst": escalate_to_analyst,
-    "file_sar": file_sar,
-    "step_up_auth": step_up_auth,
+    "ALLOW_TRANSACTION": ALLOW_TRANSACTION,
+    "DECLINE_TRANSACTION": DECLINE_TRANSACTION,
+    "MONITOR_CARD": MONITOR_CARD,
+    "MONITOR_CONNECTED_CARDS": MONITOR_CONNECTED_CARDS,
+    "WARN_CUSTOMER": WARN_CUSTOMER,
+    "VERIFY_WITH_CUSTOMER": VERIFY_WITH_CUSTOMER,
+    "STEP_UP_AUTH": STEP_UP_AUTH,
+    "BLOCK_CARD": BLOCK_CARD,
+    "BLOCK_ALL_CARDS": BLOCK_ALL_CARDS,
+    "GENERATE_REPORT": GENERATE_REPORT,
+    "CREATE_CASE": CREATE_CASE,
+    "FILE_REPORT": FILE_REPORT,
+    "ESCALATE_TO_ANALYST": ESCALATE_TO_ANALYST,
+    "CLOSE_NO_FRAUD": CLOSE_NO_FRAUD,
 }
 
-# Alias used by the S4.4.1 spec surface.
+# Alias for compatibility.
 ACTIONS = MOCK_APIS

@@ -162,12 +162,26 @@ class Retriever:
 
     # -- public API --------------------------------------------------------
     def search(self, query: str, k: int = 3) -> list[dict[str, Any]]:
-        """Backward-compatible search: top-k hits with text + score."""
+        """Backward-compatible search: top-k hits with text + score.
+
+        Hybrid ranking: cosine over hashed-trigram vectors, plus an
+        exact-phrase bonus when the query's key phrase occurs verbatim in a
+        chunk. The bonus keeps dense ranking but breaks ties toward exact
+        matches (e.g. ``card_not_present_fraud`` vs
+        ``card_not_present_new_device``).
+        """
         chunks, vecs = self._chunk_vectors()
         scored = self._score(query, chunks, vecs)
+        phrase = query.strip().split()[-1].lower() if query.strip() else ""
+        boosted: list[tuple[float, dict[str, Any]]] = []
+        for score, ch in scored:
+            if phrase and phrase in str(ch.get("text", "")).lower():
+                score += 0.5
+            boosted.append((score, ch))
+        boosted.sort(key=lambda s: s[0], reverse=True)
         return [{"doc": ch["doc"], "chunk_id": ch["chunk_id"],
                  "score": round(score, 4), "text": ch["text"][:500]}
-                for score, ch in scored[:k] if score > 0]
+                for score, ch in boosted[:k] if score > 0]
 
     def retrieve(self, query: str, top_k: int = 3,
                  graph_evidence: list[str] | None = None) -> dict[str, Any]:

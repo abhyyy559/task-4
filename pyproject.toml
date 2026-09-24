@@ -13,6 +13,7 @@ dependencies = ["pyyaml", "numpy"]
 test = ["pytest"]
 ui = ["streamlit"]
 graph = ["langgraph"]
+mcp = ["tigergraph-mcp"]
 
 [tool.setuptools.packages.find]
 where = ["."]

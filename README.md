@@ -1,47 +1,51 @@
-# fraud-agent
+# HHGOA TigerGraph Task-4 — Agentic Fraud Investigation
 
-Agentic fraud investigation over IEEE-CIS-compatible transaction data.
+Agentic fraud investigation over the official HHGOA IEEE-CIS dataset
+(590,742 transactions, 144,432 identities, 5,565 closed cases).
 Graph layer (TigerGraph w/ local mock fallback) + GraphRAG pattern knowledge +
-policy-gated actions + Streamlit UI + 20-case benchmark.
+policy-gated actions (R1–R10, verbatim from the official README) +
+Streamlit UI + 20-case benchmark (`HHG-001` … `HHG-020`).
 
 ## Quickstart
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate        # Windows; `source .venv/bin/activate` on POSIX
-pip install -e ".[test]"      # or: pip install pytest pyyaml numpy
-python -m pytest tests/ -q    # unit + integration tests
-python -m src.agent.runner --all   # benchmark 20 cases -> cases/outputs/
-python -m src.main --case case_01  # single case
-python -m src.graphrag.ingest_docs # rebuild pattern knowledge store
-streamlit run src/ui/app.py   # investigation UI (needs streamlit)
+source .venv/bin/activate            # POSIX; `.venv\Scripts\activate` on Windows
+pip install -e ".[test]"             # or: pip install pytest pyyaml numpy
+python -m pytest tests/ -q           # unit + integration tests
+python -m src.agent.runner --all     # investigate 20 cases -> cases/HHG-*.json
+python -m src.agent.runner --case HHG-001   # single case
+streamlit run src/ui/app.py          # investigation UI (needs streamlit)
 ```
 
+The official 704 MB dataset (`data/HHGOA_IEEE_real/`, from the Google Drive
+link in `TASK-PLAN-APPENDIX-README.md`) is **not** committed; place it there
+before running. Without it the runner uses the small synthetic stub in
+`data/HHGOA_IEEE/` and marks output `is_fallback: true`.
+
 ## Repo tree
-- `src/agent/` — state, prompts, memory, policy, orchestrator, LangGraph, runner
-- `src/tigergraph/` — `schema.gsql`, `queries.gsql`, mock-backed `client.py`
-- `src/graphrag/` — ingest + numpy-light retriever
-- `src/mcp/` — tool wrappers; `config/mcp.json` registry
+- `src/agent/` — state, policy (R1–R10), investigator, orchestrator, LangGraph, runner
+- `src/tigergraph/` — `schema.gsql`, `queries.gsql` (incl. WCC `q_ring_components`), mock-backed `client.py`
+- `src/graphrag/` — ingest + numpy-light retriever over official pattern definitions
+- `src/mcp/` — local tool wrappers + optional live bridge to official `tigergraph-mcp`
 - `src/actions/` — mock APIs + policy-gated executor
-- `cases/inputs/` — 20 benchmark cases (5 patterns x 4)
-- `data/HHGOA_IEEE/` — synthetic IEEE-CIS-compatible stub (see PLAN.md, data README)
-- `docs/` — architecture, demo, blog + social drafts
+- `cases/inputs/` — 20 official inputs (`HHG-001.json` … `HHG-020.json`)
+- `cases/` — 20 generated answers (`HHG-001.json` … `HHG-020.json`), official nested schema
+- `data/HHGOA_IEEE/` — small synthetic stub for offline testing only
+- `docs/` — architecture, MCP integration, demo, blog + social drafts
 
 ## Notes
 - Works fully offline: TigerGraph/LangGraph/Streamlit are all optional with fallbacks.
-- `data/HHGOA_IEEE/` is synthetic (real dataset was missing); see `PLAN.md` section 1.
-- IEEE-CIS stub: `transactions.csv` (PK TransactionID + `isFraud` ground truth for
-  scoring only — never read at investigation time), `identity.csv` (FK TransactionID),
-  `patterns.md` (5 fraud pattern definitions, GraphRAG corpus seed). Only V1–V2, C1–C2,
-  D1 populated; V3–V339 omitted by design. See `data/HHGOA_IEEE/README.md`.
+- Official answer schema: `case_id`, `case`, `evidence_requests`, `next_best_actions`,
+  `sar`, `stop_reason`, `tool_calls`, `tokens`, `latency_s`. Verdicts are
+  `fraud | legitimate | uncertain`; `escalated` is a status, never a verdict.
+- Fraud Policy R1–R10 in `config/policies.yaml` is transcribed verbatim from the
+  official dataset README (§3).
+- Never download the original IEEE-CIS/Kaggle data to recover outcomes
+  (disqualification rule); this repo only uses the official HHGOA release.
 
 ## Config
 - `config/settings.yaml` — model name, thresholds (no API key needed for mock path).
-- `config/policies.yaml` — action allow/deny rules enforced by `policy.py`.
+- `config/policies.yaml` — R1–R10 policy rules enforced by `policy.py`.
 - `config/mcp.json` — MCP tool registry mirroring `src/mcp/tools.py`.
-- `.env.example` — TigerGraph Savanna vars (`TG_HOST`, …); unset = mock fallback.
-
-## Outputs
-- `cases/inputs/case_NN.json` — 20 benchmark cases (5 patterns × 4).
-- `cases/outputs/case_NN.json` — investigation results, exact 16-field schema
-  (see `PLAN.md` §4; `OUTPUT_SCHEMA` in `src/agent/runner.py`).
+- `.env.example` — optional live TigerGraph (`TIGERGRAPH_HOST/USER/PASS/GRAPH`).

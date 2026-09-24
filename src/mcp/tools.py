@@ -88,6 +88,18 @@ def t_evidence_subgraph(args: dict[str, Any]) -> dict[str, Any]:
         return _err("evidence_subgraph", f"missing arg: {exc}")
 
 
+def t_ring_components(args: dict[str, Any]) -> dict[str, Any]:
+    try:
+        min_size = int(args.get("min_size", 2))
+    except (TypeError, ValueError):
+        return _err("ring_components", "min_size must be an int")
+    try:
+        return _ok("ring_components",
+                   get_client().q_ring_components(min_size=min_size))
+    except Exception as exc:
+        return _err("ring_components", f"{type(exc).__name__}: {exc}")
+
+
 def t_fraud_knowledge(args: dict[str, Any]) -> dict[str, Any]:
     try:
         return _ok("fraud_knowledge",
@@ -104,6 +116,7 @@ TOOLS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "takeover": t_takeover,
     "synthetic": t_synthetic,
     "evidence_subgraph": t_evidence_subgraph,
+    "ring_components": t_ring_components,
     "fraud_knowledge": t_fraud_knowledge,
 }
 
@@ -115,6 +128,7 @@ TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     "takeover": {"args": {"card1": "uint"}},
     "synthetic": {"args": {"card1": "uint"}},
     "evidence_subgraph": {"args": {"transaction_ids": "int[]"}},
+    "ring_components": {"args": {"min_size": "int?"}},
     "fraud_knowledge": {"args": {"query": "string", "k": "int?"}},
 }
 

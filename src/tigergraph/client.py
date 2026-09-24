@@ -41,6 +41,7 @@ class TigerGraphClient:
         self.data_dir = Path(data_dir) if data_dir else DATA_DIR
         self.mode = "mock"
         self.host = host or os.environ.get("TIGERGRAPH_HOST", "")
+        self._case_ledger: dict[str, dict[str, Any]] = {}
         if self.host:
             self._init_live()
         else:
@@ -80,6 +81,71 @@ class TigerGraphClient:
             with open(id_csv, newline="", encoding="utf-8") as fh:
                 for row in csv.DictReader(fh):
                     self._identity[str(row.get("TransactionID"))] = row
+
+    # -- case memory ------------------------------------------------------
+    def write_case_vertex(self, case_record: dict[str, Any]) -> str:
+        """Write a closed case back into the graph (case memory).
+
+        Mock mode: stores the case in the in-process ledger and returns the
+        vertex id ``CASE-<case_id>``. Live mode: attempts a pyTigerGraph
+        upsert of a Case vertex; on any failure falls back to the ledger and
+        reports the fallback in the returned id suffix. Never raises: a case
+        write must not fail an investigation.
+        """
+        case_id = str(case_record.get("case_id", "unknown"))
+        vertex_id = f"CASE-{case_id}"
+        payload = {
+            "vertex_id": vertex_id,
+            "case_id": case_id,
+            "status": case_record.get("status", ""),
+            "verdict": case_record.get("verdict", ""),
+            "pattern": case_record.get("pattern", ""),
+            "fraud_probability": case_record.get("fraud_probability", 0.0),
+            "exposure_usd": case_record.get("exposure_usd", 0.0),
+            "affected_txn_ids": list(case_record.get("affected_txn_ids", [])),
+            "connected_card_ids": list(case_record.get("connected_card_ids", [])),
+            "connected_device_profiles": list(
+                case_record.get("connected_device_profiles", [])
+            ),
+            "summary": case_record.get("summary", ""),
+        }
+        if self.mode == "live":
+            try:
+                import pyTigerGraph  # lazy: optional dependency
+
+                conn = pyTigerGraph.TigerGraphConnection(
+                    host=self.host,
+                    username=os.environ.get("TIGERGRAPH_USER", ""),
+                    password=os.environ.get("TIGERGRAPH_PASS", ""),
+                    graphname=self.graph,
+                )
+                # Vertex type and attributes match src/tigergraph/schema.gsql.
+                conn.upsertVertex(
+                    "CASE",
+                    vertex_id,
+                    attributes={
+                        "case_id": case_id,
+                        "pattern": payload["pattern"],
+                        "verdict": payload["verdict"],
+                        "confidence": float(payload["fraud_probability"]),
+                        "risk_score": float(payload["fraud_probability"]),
+                    },
+                )
+            except Exception as exc:  # live write failed -> ledger fallback
+                payload["_live_write_error"] = f"{type(exc).__name__}: {exc}"
+        self._case_ledger[vertex_id] = payload
+        return vertex_id
+
+    def find_written_cases(
+        self, pattern: Optional[str] = None, limit: int = 5
+    ) -> list[dict[str, Any]]:
+        """Retrieve previously written case vertices (case memory)."""
+        out = [
+            c
+            for c in self._case_ledger.values()
+            if pattern is None or c.get("pattern") == pattern
+        ]
+        return out[:limit]
 
     # -- helpers ----------------------------------------------------------
     def _require_mock(self) -> None:
@@ -270,6 +336,65 @@ class TigerGraphClient:
 
     def q_device_cluster(self, device: str) -> dict[str, Any]:
         return self.device_cluster(device)
+
+    def q_ring_components(self, min_size: int = 2) -> dict[str, Any]:
+        return self.ring_components(min_size=min_size)
+
+    def ring_components(self, min_size: int = 2) -> dict[str, Any]:
+        """Weakly connected components over the card/device bipartite graph.
+
+        Union-find over card1 <-> DeviceInfo edges (identity joined on
+        TransactionID). This is a genuine graph algorithm (disjoint-set
+        union over the full edge set), not a bounded traversal: every card
+        linked to another through any chain of shared devices lands in one
+        component. Mock counterpart of q_ring_components on live
+        TigerGraph; components with >= min_size cards are candidate rings
+        for R6/R9 review.
+        """
+        self._require_mock()
+        parent: dict[str, str] = {}
+
+        def find(x: str) -> str:
+            root = x
+            while parent[root] != root:
+                root = parent[root]
+            while parent[x] != root:
+                parent[x], x = root, parent[x]
+            return root
+
+        for row in self._txns:
+            tid = str(row.get("TransactionID"))
+            dev = str(self._identity.get(tid, {}).get("DeviceInfo") or "").strip()
+            card = str(row.get("card1") or "").strip()
+            if not dev or not card:
+                continue
+            ckey, dkey = f"C:{card}", f"D:{dev}"
+            for k in (ckey, dkey):
+                if k not in parent:
+                    parent[k] = k
+            ra, rb = find(ckey), find(dkey)
+            if ra != rb:
+                parent[rb] = ra
+        comp_cards: dict[str, list[str]] = {}
+        for key in parent:
+            if key.startswith("C:"):
+                comp_cards.setdefault(find(key), []).append(key[2:])
+        rings = [
+            {
+                "component": comp,
+                "card_count": len(cards),
+                "cards": sorted(cards)[:25],
+            }
+            for comp, cards in comp_cards.items()
+            if len(cards) >= min_size
+        ]
+        rings.sort(key=lambda r: -r["card_count"])  # type: ignore[arg-type]
+        return self._result(
+            "q_ring_components",
+            f"{len(rings)} device-linked card components (size >= {min_size})",
+            [r["component"] for r in rings[:10]],
+            components=rings[:25],
+        )
 
     def q_mule_fanout(self, hub_card: Any) -> dict[str, Any]:
         return self.mule_fanout(hub_card)
