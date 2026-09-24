@@ -6,7 +6,7 @@
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[test]"      # pytest, pyyaml, numpy
-python -m pytest tests/ -q    # expect: 42/42 pass
+python -m pytest tests/ -q    # expect: 47/47 pass
 ```
 
 Place the official 704 MB dataset at `data/HHGOA_IEEE_real/HHGOA_IEEE/`

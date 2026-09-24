@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re as _re_local
 from pathlib import Path
 from typing import Any
 
@@ -65,16 +66,31 @@ def save_case(case_data: dict[str, Any]) -> dict[str, Any]:
     return {"case_id": case_id, "status": "saved", "path": str(mem.path)}
 
 
-def find_similar_cases(features: dict[str, Any], top_k: int = 5) -> list[dict[str, Any]]:
-    """Jaccard on entities_flagged sets + fraud_pattern bonus."""
+def find_similar_cases(features: dict[str, Any], top_k: int = 5,
+                        before_case_id: str | None = None) -> list[dict[str, Any]]:
+    """Jaccard on entities_flagged sets + fraud_pattern bonus.
+
+    Temporal safety: when before_case_id is given, only cases whose numeric
+    suffix is strictly lower are retrieved — no future-case leakage.
+    """
     mem = CaseMemory()
     history = mem.history()
     if not history:
         return []
     target_ents = _entities_of(features)
     target_pat = str(features.get("fraud_pattern") or features.get("pattern") or "")
+    max_num = -1
+    if before_case_id:
+        import re as _re
+        nums = _re.findall(r"(\d+)", str(before_case_id))
+        if nums:
+            max_num = int(nums[-1])
     scored: list[tuple[float, str, dict[str, Any]]] = []
     for cid, rec in history.items():
+        if max_num >= 0:
+            nums = _re_local.findall(r"(\d+)", str(cid))
+            if nums and int(nums[-1]) >= max_num:
+                continue  # temporal safety: never retrieve from the future
         score = _jaccard(target_ents, _entities_of(rec))
         pat = str(rec.get("fraud_pattern") or rec.get("pattern") or "")
         if target_pat and pat and target_pat == pat:

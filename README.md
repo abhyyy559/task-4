@@ -48,4 +48,8 @@ before running. Without it the runner uses the small synthetic stub in
 - `config/settings.yaml` — model name, thresholds (no API key needed for mock path).
 - `config/policies.yaml` — R1–R10 policy rules enforced by `policy.py`.
 - `config/mcp.json` — MCP tool registry mirroring `src/mcp/tools.py`.
-- `.env.example` — optional live TigerGraph (`TIGERGRAPH_HOST/USER/PASS/GRAPH`).
+- `.env.example` — optional live TigerGraph (`TIGERGRAPH_HOST/USER/PASS/GRAPH`); unset = mock fallback.
+
+## Outputs
+- `cases/inputs/HHG-001.json … HHG-020.json` — 20 official benchmark inputs.
+- `cases/HHG-001.json … HHG-020.json` — **submission answer files** (repo-root contract). Each carries the full investigation record: evidence, pattern signatures, fraud probability, `next_best_actions` (before/after extra evidence), `evidence_requests`, SAR block when policy requires, and the graph write-back receipt.

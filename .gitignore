@@ -3,6 +3,7 @@ data/HHGOA_IEEE_real/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 .venv/
 # Secrets
 .env
