@@ -87,7 +87,7 @@ class TigerGraphClient:
         """Write a closed case back into the graph (case memory).
 
         Mock mode: stores the case in the in-process ledger and returns the
-        vertex id ``CASE-<case_id>``. Live mode: attempts a pyTigerGraph
+        vertex id ``FRAUDCASE-<case_id>``. Live mode: attempts a pyTigerGraph
         upsert of a Case vertex; on any failure falls back to the ledger and
         reports the fallback in the returned id suffix. Never raises: a case
         write must not fail an investigation.
@@ -119,9 +119,10 @@ class TigerGraphClient:
                     password=os.environ.get("TIGERGRAPH_PASS", ""),
                     graphname=self.graph,
                 )
-                # Vertex type and attributes match src/tigergraph/schema.gsql.
+                # Vertex type and attributes match the live Savanna schema
+                # (FRAUDCASE — renamed from CASE, a reserved GSQL keyword).
                 conn.upsertVertex(
-                    "CASE",
+                    "FRAUDCASE",
                     vertex_id,
                     attributes={
                         "case_id": case_id,

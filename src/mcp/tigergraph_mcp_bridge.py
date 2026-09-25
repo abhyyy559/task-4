@@ -66,13 +66,16 @@ LOCAL_TO_MCP: Dict[str, Dict[str, Any]] = {
     "evidence_subgraph": {
         "mcp_tool": "run_installed_query",
         "query": "q_evidence_subgraph",
-        "args": {"txn_ids": "transaction_ids", "hops": "hops"},
+        "args": {"txn_ids": "transaction_ids"},
+        "note": "live query is a fixed 2-hop expansion (no hops param; the "
+                "parameterized WHILE version hangs GSQL 4.2.5)",
     },
     "ring_components": {
         "mcp_tool": "run_installed_query",
         "query": "q_ring_components",
-        "args": {"max_iter": "max_iter"},
-        "note": "genuine graph algorithm (WCC label propagation); live only",
+        "args": {},
+        "note": "genuine graph algorithm (WCC label propagation, 10 rounds "
+                "unrolled; no max_iter param on the live query); live only",
     },
     "fraud_knowledge": {
         "mcp_tool": "document_search",

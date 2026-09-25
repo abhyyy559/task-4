@@ -2,6 +2,12 @@
 -- schema.gsql — FraudGraph schema DDL (TigerGraph Savanna / GSQL)
 -- Dataset: data/HHGOA_IEEE/ (IEEE-CIS-compatible stub, see PLAN.md sections 2, 6)
 -- Convention: UPPER vertex names; primary keys via primary_id_as_attribute.
+--
+-- LIVE NOTE (2026-09-24): this file is the authored schema. The version
+-- actually installed on the live Savanna instance (TigerGraph 4.2.5) renames
+-- reserved keywords: CASE -> FRAUDCASE (and CASE_* edges -> FRAUDCASE_*),
+-- POLICY -> POLICYRULE, plus query/action/target attribute renames. See
+-- src/tigergraph/queries.gsql (live-verified) and docs/ for details.
 -- =====================================================================
 
 -- Drop-then-create is handled by the loader script; this file is declarative.

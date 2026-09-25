@@ -76,25 +76,21 @@ CREATE QUERY q_synthetic_identity(STRING card_id) FOR GRAPH fraud_graph {
   PRINT Txns, Ids;
 }
 
--- Q6: q_evidence_subgraph — bounded k-hop evidence export around case entities.
--- Params: txn_ids (seed TRANSACTION ids), hops (max traversal depth, default 2).
+-- Q6: q_evidence_subgraph — bounded 2-hop evidence export around case entities.
+-- Params: txn_ids (seed TRANSACTION ids).
 -- Returns: AllN (seed TRANSACTION evidence IDs plus node IDs reached within
---   `hops` traversals). Used by runner to build evidence_ids.
-CREATE QUERY q_evidence_subgraph(SET<UINT> txn_ids, INT hops = 2) FOR GRAPH fraud_graph {
+--   2 traversals). Used by runner to build evidence_ids.
+-- NOTE: fixed 2-hop straight-line expansion — the GSQL REST endpoint on this
+-- build hangs on WHILE loops, so the parameterized k-hop loop version is not
+-- installed. The local engine (client.py evidence_subgraph) keeps the k-hop form.
+CREATE QUERY q_evidence_subgraph(SET<UINT> txn_ids) FOR GRAPH fraud_graph {
   Seed = {TRANSACTION.*};
   Seed = SELECT s FROM Seed:s WHERE s.txn_id IN txn_ids;
-  AllN = Seed;
-  Frontier = Seed;
-  INT i = 0;
-  WHILE i < hops DO
-    BEGIN
-      Nxt = SELECT n FROM Frontier:s
-            -((MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)-)- :n;
-      NewN = Nxt MINUS AllN;
-      AllN = AllN UNION Nxt;
-      Frontier = NewN;
-      i = i + 1;
-    END;
+  H1 = SELECT n FROM Seed:s
+       -(MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)- :n;
+  H2 = SELECT n FROM H1:s
+       -(MADE_WITH|USED_DEVICE|USED_EMAIL|SHIPPED_TO|BILLED_TO|HAS_IDENTITY|SOLD_BY)- :n;
+  AllN = Seed UNION H1 UNION H2;
   PRINT AllN;
 }
 
@@ -116,30 +112,81 @@ CREATE QUERY q_get_transactions(SET<UINT> transaction_ids) FOR GRAPH fraud_graph
 -- not a bounded traversal: every card linked to another through any chain
 -- of shared devices converges to one component label. Components with more
 -- than one card are candidate fraud rings for R6/R9 analyst review.
--- Params: max_iter (label-propagation rounds, default 10).
 -- Returns: CardComp (card_id -> component label), CompSize (component -> card count).
-CREATE QUERY q_ring_components(INT max_iter = 10) FOR GRAPH fraud_graph {
+-- NOTE: 10 propagation rounds are unrolled straight-line — the GSQL REST
+-- endpoint on this build hangs on WHILE loops, so the parameterized
+-- max_iter loop version is not installed. 10 was the loop default anyway.
+CREATE QUERY q_ring_components() FOR GRAPH fraud_graph {
   MinAccum<STRING> @comp;
   MapAccum<STRING, STRING> @@card_comp;
   MapAccum<STRING, INT> @@comp_size;
 
   Cards = {CARD.*};
   Cards = SELECT c FROM Cards:c ACCUM c.@comp += c.card_id;
-  Devs = SELECT d FROM {DEVICE.*}:d ACCUM d.@comp += d.device;
+  Devs = SELECT d FROM DEVICE:d ACCUM d.@comp += d.device;
 
-  INT i = 0;
-  WHILE i < max_iter DO
-    i = i + 1;
-    S1 = SELECT c FROM {CARD.*}:c
-         -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
-         ACCUM c.@comp += d.@comp;
-    S2 = SELECT d FROM {DEVICE.*}:d
-         -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
-         ACCUM d.@comp += c.@comp;
-  END;
-
-  Assign = SELECT c FROM {CARD.*}:c
-           POST-ACCUM @@card_comp += (c.card_id -> c.@comp);
-  Sizes = SELECT c FROM {CARD.*}:c ACCUM @@comp_size += (c.@comp -> 1);
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  P = SELECT c FROM CARD:c
+       -(MADE_WITH)- TRANSACTION:m -(USED_DEVICE)- DEVICE:d
+       ACCUM c.@comp += d.@comp;
+  P = SELECT d FROM DEVICE:d
+       -(USED_DEVICE)- TRANSACTION:m -(MADE_WITH)- CARD:c
+       ACCUM d.@comp += c.@comp;
+  Assign = SELECT c FROM CARD:c
+           ACCUM @@card_comp += (c.card_id -> c.@comp);
+  Sizes = SELECT c FROM CARD:c ACCUM @@comp_size += (c.@comp -> 1);
   PRINT @@card_comp, @@comp_size;
 }
